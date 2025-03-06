@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { getRandomQuestion } from '../../api/questionApi';
 
 // 🔹 네비게이션 타입 정의
 type RootStackParamList = {
@@ -20,22 +21,59 @@ type Props = {
 };
 
 const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
+    const [questionId, setQuestionId] = useState<number | null>(null);
+    const [questionText, setQuestionText] = useState<string | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [currentDate, setCurrentDate] = useState<string>(''); // ✅ 오늘 날짜 상태 추가
+
+    useEffect(() => {
+        // ✅ 현재 날짜 가져오기 (YYYY.MM.DD 형식)
+        const today = new Date();
+        const formattedDate = today.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).split('T')[0].replace(/-/g, '.'); // 2024.03.05 형식
+        setCurrentDate(formattedDate);
+
+        const fetchQuestion = async () => {
+            try {
+                const data = await getRandomQuestion();
+                if (data.success && data.data) {
+                    setQuestionId(data.data.quesId);
+                    setQuestionText(data.data.quesContent);
+                }
+            } catch (error) {
+                console.error('질문을 불러오는 중 오류 발생:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchQuestion();
+    }, []);
+
     return (
         <View style={styles.container}>
             {/* 🔹 스크롤 가능한 질문 UI */}
             <ScrollView contentContainerStyle={styles.content}>
                 <Text style={styles.date}>Day</Text>
-                <Text style={styles.dateNumber}>2025.01.04</Text>
+                {/* ✅ 오늘 날짜 표시 */}
+                <Text style={styles.dateNumber}>{currentDate}</Text>
 
-                {/* 하트 이미지로 변경 */}
+                {/* 하트 이미지 */}
                 <View style={styles.heartContainer}>
                     <Image source={require('../../../assets/images/questions/heart.png')} style={styles.heart} />
                 </View>
 
-                <Text style={styles.questionNumber}>#120번째 질문</Text>
-                <Text style={styles.questionText}>
-                    사랑하는 연인과 가장 행복했던 시간은 언제인가요?
-                </Text>
+                {loading ? (
+                    <Text style={styles.loadingText}>질문을 불러오는 중...</Text>
+                ) : (
+                    <>
+                        <Text style={styles.questionNumber}>#{questionId}번째 질문</Text>
+                        <Text style={styles.questionText}>{questionText}</Text>
+                    </>
+                )}
 
                 {/* 🔹 답변 입력 필드 */}
                 <View style={styles.answerContainer}>
@@ -44,9 +82,9 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                         style={styles.answerInput}
                         placeholder="이곳을 눌러서 답변을 입력해 주세요."
                         placeholderTextColor="#7B7B7B"
-                        multiline={true}  // 여러 줄 입력 가능
-                        numberOfLines={4} // 초기 줄 수 설정
-                        textAlignVertical="top" // 상단 정렬 (iOS & Android)
+                        multiline={true}
+                        numberOfLines={4}
+                        textAlignVertical="top"
                     />
                 </View>
 
@@ -55,7 +93,7 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                     <TextInput
                         style={styles.disabledAnswerInput}
                         value="승철님이 아직 답변하지 않았어요."
-                        editable={false} // 입력 비활성화
+                        editable={false}
                         textAlignVertical="top"
                         multiline={true}
                     />
@@ -90,13 +128,13 @@ const styles = StyleSheet.create({
     dateNumber: {
         fontSize: 14,
         marginVertical: 5,
-        color: '#454545'
+        color: '#454545',
     },
     heartContainer: {
         marginVertical: 10,
     },
     heart: {
-        width: 30,  // 이미지 크기 조정
+        width: 30,
         height: 30,
         resizeMode: 'contain',
     },
@@ -109,7 +147,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
         marginVertical: 10,
-        marginHorizontal: 60
+        marginHorizontal: 60,
     },
     answerContainer: {
         width: '100%',
@@ -123,22 +161,27 @@ const styles = StyleSheet.create({
     answerInput: {
         width: '100%',
         padding: 15,
-        borderWidth: 0, // 🔹 테두리 제거
-        borderColor: 'transparent', // 🔹 혹시라도 테두리가 남아있을 경우 투명 처리
-        borderRadius: 10, // 모서리 둥글게 유지 (선택 사항)
+        borderWidth: 0,
+        borderColor: 'transparent',
+        borderRadius: 10,
         backgroundColor: '#F4F4F4',
-        minHeight: 45, // 최소 높이 설정
+        minHeight: 45,
     },
     disabledAnswerInput: {
         width: '100%',
         padding: 15,
-        borderWidth: 0, // 🔹 테두리 제거
-        borderColor: 'transparent', // 🔹 혹시라도 테두리가 남아있을 경우 투명 처리
-        borderRadius: 10, // 모서리 둥글게 유지 (선택 사항)
-        backgroundColor: '#F4F4F4', // 연한 배경색
-        color: '#7B7B7B', // 텍스트 색상
-        minHeight: 45, // 최소 높이 설정
-        textAlignVertical: 'center', // 텍스트 중앙 정렬
+        borderWidth: 0,
+        borderColor: 'transparent',
+        borderRadius: 10,
+        backgroundColor: '#F4F4F4',
+        color: '#7B7B7B',
+        minHeight: 45,
+        textAlignVertical: 'center',
+    },
+    loadingText: {
+        fontSize: 16,
+        color: '#888',
+        marginVertical: 20,
     },
     chatButton: {
         position: 'absolute',
