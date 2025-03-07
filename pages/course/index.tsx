@@ -1,3 +1,4 @@
+import React from "react";
 import CourseContainer from "../../src/screens/course/course-container";
 
 const CourseScreen = () => {
