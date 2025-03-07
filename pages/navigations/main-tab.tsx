@@ -1,5 +1,6 @@
+import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import ClendarScreen from '../clendar';
+import CalendarScreen from '../calendar';
 import QuestionsScreen from '../questions';
 import HomeScreen from '../home';
 import CourseScreen from '../course';
@@ -14,7 +15,7 @@ const MainTabsNavigator = () => {
             <Tab.Screen name="Questions" component={QuestionsScreen} />
             <Tab.Screen name="Map" component={MapScreen} />
             <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="Clendar" component={ClendarScreen} />
+            <Tab.Screen name="Calendar" component={CalendarScreen} />
             <Tab.Screen name="Course" component={CourseScreen} />
         </Tab.Navigator>
     )
