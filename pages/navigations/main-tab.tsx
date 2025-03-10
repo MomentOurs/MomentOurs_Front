@@ -5,6 +5,7 @@ import QuestionsScreen from '../questions';
 import HomeScreen from '../home';
 import CourseNavigator from '../../src/screens/course/course-navigation';
 import MapScreen from '../map';
+import HomeStackNavigator from '../home/home-stack-navigator';
 
 const Tab = createBottomTabNavigator();
 
@@ -13,7 +14,7 @@ const MainTabsNavigator = () => {
         <Tab.Navigator initialRouteName="Home">
             <Tab.Screen name="Questions" component={QuestionsScreen} />
             <Tab.Screen name="Map" component={MapScreen} />
-            <Tab.Screen name="Home" component={HomeScreen} />
+            <Tab.Screen name="Home" component={HomeStackNavigator} />
             <Tab.Screen name="Calendar" component={CalendarScreen} />
             <Tab.Screen name="Course" component={CourseNavigator} options={{ headerShown: false }}/> 
         </Tab.Navigator>
