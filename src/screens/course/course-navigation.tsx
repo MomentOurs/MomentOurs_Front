@@ -1,15 +1,19 @@
 import React from 'react';
+import { TouchableOpacity } from 'react-native';
 import { createStackNavigator } from '@react-navigation/stack';
 import CourseHomeScreen from '../../../pages/course/index';
 // import CourseCreateScreen from './course-create';
 import CourseFolderCreateScreen from './course-folder-create';
-// import CourseDetailScreen from './course-detail';
+import CourseFolderDetail from './course-folder-detail';
+import CourseDetailScreen from './course-detail';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export type CourseStackParamList = {
-  CourseHome: { refresh?: boolean };
-  CourseCreate: undefined;
-  CourseFolderCreate: undefined;
-  CourseDetail: { folderId: string };
+    CourseHome: { refresh?: boolean };
+    CourseCreate: undefined;
+    CourseFolderCreate: undefined;
+    CourseFolderDetail: { folderId: number; folderTitle: string; folderDescription: string };
+    CourseDetail: { courseId: number; courseTitle: string; courseType: 'DATE' | 'TRIP'; courseStartDate: string; courseEndDate: string };
 };
 
 const Stack = createStackNavigator<CourseStackParamList>();
@@ -17,10 +21,11 @@ const Stack = createStackNavigator<CourseStackParamList>();
 const CourseNavigator = () => {
   return (
     <Stack.Navigator initialRouteName="CourseHome">
-      <Stack.Screen name="CourseHome" component={CourseHomeScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="CourseHome" component={CourseHomeScreen} options={{ title: '코스' }}/> 
       {/* <Stack.Screen name="CourseCreate" component={CourseCreateScreen} options={{ title: '코스 만들기' }} /> */}
       <Stack.Screen name="CourseFolderCreate" component={CourseFolderCreateScreen} options={{ title: '폴더 만들기' }} />
-      {/* <Stack.Screen name="CourseDetail" component={CourseDetailScreen} options={{ title: '폴더 상세' }} /> */}
+      <Stack.Screen name="CourseFolderDetail" component={CourseFolderDetail} />
+      <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
     </Stack.Navigator>
   );
 };
