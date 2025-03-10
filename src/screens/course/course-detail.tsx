@@ -4,7 +4,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { CourseStackParamList } from './course-navigation';
 import { StackNavigationProp } from '@react-navigation/stack';
 import CourseLayout from './course-layout';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 
 type Location = {
     locationName: string;
@@ -21,7 +20,7 @@ const dummyLocations: Location[] = [
     { locationName: '하나로마트 경주농협본점', address: '경상북도 경주시 태종로 717', latitude: 35.8429, longitude: 129.2121, sequence: 3, courseMemo: '지역 특산물을 저렴하게 구매 가능' },
 ];
 
-const tabs = ['데이트 코스', '내 코스', '즐겨찾기'];
+const sequenceColors = ['#FF6F61', '#FFA07A', '#FFD700', '#90EE90', '#87CEEB'];
 
 const CourseDetail = () => {
     const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
@@ -111,7 +110,7 @@ const CourseDetail = () => {
             <FlatList
                 data={locations}
                 keyExtractor={(item) => item.locationName}
-                renderItem={({ item }) => (
+                renderItem={({ item, index }) => (
                     <TouchableOpacity 
                         style={styles.locationItem}
                         onPress={() => isDeleteMode ? toggleSelectLocation(item.locationName) : null}
@@ -121,6 +120,9 @@ const CourseDetail = () => {
                                 <View style={[styles.checkbox, selectedLocations.includes(item.locationName) && styles.checkboxSelected]} />
                             </View>
                         )}
+
+                        <View style={[styles.sequenceCircle, { backgroundColor: sequenceColors[index % sequenceColors.length] }]}></View>
+
                         <View style={styles.locationTextContainer}>
                             <Text style={styles.locationName}>{item.locationName}</Text>
                             <Text style={styles.locationAddress}>{item.address}</Text>
@@ -141,11 +143,11 @@ const CourseDetail = () => {
                     <TouchableOpacity 
                         style={styles.addButton}
                         activeOpacity={0.7}
-                        onPress={() => console.log('장소 추가')}
+                        onPress={() => navigation.navigate('CourseLocationSearch')}
                     >
                         <Text style={styles.addButtonText}>장소 추가</Text>
                     </TouchableOpacity>
-                    
+
                     <TouchableOpacity 
                         style={styles.registerButton}
                         activeOpacity={0.7}
@@ -195,12 +197,12 @@ const styles = StyleSheet.create({
         borderBottomColor: '#ddd',
     },
     courseTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#FF6F61',
     },
     courseDate: {
-        fontSize: 14,
+        fontSize: 12,
         color: '#666',
     },
     deleteButton: {
@@ -223,13 +225,22 @@ const styles = StyleSheet.create({
         fontSize: 12,
         color: '#888',
     },
+    sequenceCircle: {
+        width: 10,
+        height: 10,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginLeft: 5,
+        marginRight: 10,
+    },
     locationItem: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#FFFFFF',
-        padding: 14,
+        padding: 12,
         borderRadius: 8,
-        marginBottom: 10,
+        marginBottom: 5,
         shadowColor: '#000',
         shadowOpacity: 0.05,
         shadowOffset: { width: 0, height: 1 },
@@ -350,6 +361,5 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },    
 });
-
 
 export default CourseDetail;

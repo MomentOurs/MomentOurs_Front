@@ -6,7 +6,7 @@ import CourseHomeScreen from '../../../pages/course/index';
 import CourseFolderCreateScreen from './course-folder-create';
 import CourseFolderDetail from './course-folder-detail';
 import CourseDetailScreen from './course-detail';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import CourseLocationSearch from './course-location-search';
 
 export type CourseStackParamList = {
     CourseHome: { refresh?: boolean };
@@ -14,6 +14,7 @@ export type CourseStackParamList = {
     CourseFolderCreate: undefined;
     CourseFolderDetail: { folderId: number; folderTitle: string; folderDescription: string };
     CourseDetail: { courseId: number; courseTitle: string; courseType: 'DATE' | 'TRIP'; courseStartDate: string; courseEndDate: string };
+    CourseLocationSearch: undefined;
 };
 
 const Stack = createStackNavigator<CourseStackParamList>();
@@ -26,6 +27,7 @@ const CourseNavigator = () => {
       <Stack.Screen name="CourseFolderCreate" component={CourseFolderCreateScreen} options={{ title: '폴더 만들기' }} />
       <Stack.Screen name="CourseFolderDetail" component={CourseFolderDetail} />
       <Stack.Screen name="CourseDetail" component={CourseDetailScreen} />
+      <Stack.Screen name="CourseLocationSearch" component={CourseLocationSearch} />
     </Stack.Navigator>
   );
 };

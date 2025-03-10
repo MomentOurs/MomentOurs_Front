@@ -58,10 +58,13 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         paddingVertical: 8,
+        borderBottomWidth: 2,
+        borderBottomColor: 'transparent',
     },
     activeTab: {
         borderBottomWidth: 2,
         borderBottomColor: '#FF6F61',
+        paddingBottom: 8,
     },
     tabText: {
         fontSize: 16,
