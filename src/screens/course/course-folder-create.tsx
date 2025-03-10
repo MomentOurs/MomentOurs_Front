@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 16,
-        backgroundColor: '#fff',
+        backgroundColor: '#FAFAFA',
     },
     contentContainer: {
         flex: 1,
@@ -99,11 +99,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         borderRadius: 10,
+        borderWidth: 0.5,
+        borderColor: '#ddd',
         marginBottom: 20,
     },
     image: {
         width: 100,
         height: 100,
+        
     },
     inputContainer: {
         width: '100%',
@@ -113,6 +116,8 @@ const styles = StyleSheet.create({
     input: {
         fontSize: 16,
         padding: 5,
+        backgroundColor: '#FFF',
+        borderRadius: 5,
         borderBottomWidth: 1,
         borderBottomColor: '#ddd',
         marginBottom: 20,
