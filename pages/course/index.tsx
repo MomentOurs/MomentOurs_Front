@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Image } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Modal, TextInput } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from '../../src/screens/course/course-navigation';
+import { RenameFolderModal, RenameDescriptionModal, DeleteFolderModal } from '../../src/components/modals/course';
 
 type Folder = {
     id: string;
@@ -26,7 +27,11 @@ const CourseScreen = ({ route }) => {
     const [isPressedEdit, setIsPressedEdit] = useState(false);
     const [pressedTab, setPressedTab] = useState<string | null>(null);
     const [pressedFolder, setPressedFolder] = useState<string | null>(null);
-
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [isDeleteMode, setIsDeleteMode] = useState(false);
+    const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
+    const [activeModal, setActiveModal] = useState<string | null>(null);
+    const [modalData, setModalData] = useState<{ folderName: string; text: string }>({ folderName: '', text: '' });
 
     useEffect(() => {
         // 실제 API 호출 (주석 처리해둠, 필요 시 활성화)
@@ -34,8 +39,20 @@ const CourseScreen = ({ route }) => {
 
         setTimeout(() => {
             setFolders([
-                { id: '1', title: '경주 관광지/To do', description: '경주여행 관광 리스트', courseCount: 3, image: 'https://example.com/image1.jpg' },
-                { id: '2', title: '맛집 리스트', description: '가고 싶은 맛집, 카페', courseCount: 5, image: 'https://example.com/image2.jpg' },
+                { 
+                    id: '1', 
+                    title: '경주 관광지/To do', 
+                    description: '경주여행 관광 리스트', 
+                    courseCount: 3, 
+                    image: require('../../assets/image (1).png') 
+                },
+                { 
+                    id: '2', 
+                    title: '맛집 리스트', 
+                    description: '가고 싶은 맛집, 카페', 
+                    courseCount: 5, 
+                    image: require('../../assets/image (2).png') 
+                },
             ]);
             setLoading(false);
         }, 1000);
@@ -84,6 +101,39 @@ const CourseScreen = ({ route }) => {
     //     }, [route.params])
     // );
 
+    const toggleEditMode = () => {
+        setIsEditMode(!isEditMode);
+        setIsDeleteMode(false);
+        setSelectedFolders([]);
+    };
+
+    const toggleDeleteMode = () => {
+        setIsDeleteMode(!isDeleteMode);
+        setIsEditMode(false);
+        setSelectedFolders([]);
+    };
+
+    const toggleSelectFolder = (id: string) => {
+        setSelectedFolders((prev) =>
+            prev.includes(id) ? prev.filter((folderId) => folderId !== id) : [...prev, id]
+        );
+    };
+
+    const confirmDelete = () => {
+        setActiveModal(null);
+        setFolders(folders.filter(folder => !selectedFolders.includes(folder.id)));
+        setIsDeleteMode(false);
+    };
+
+    const openModal = (type: 'rename' | 'description' | 'delete', folder: Folder) => {
+        if (type === 'rename') {
+            setModalData({ folderName: folder.title, text: folder.title }); // 🛠 폴더명을 초기 값으로 설정
+        } else {
+            setModalData({ folderName: folder.title, text: folder.description }); // 기존 설명 유지
+        }
+        setActiveModal(type);
+    };    
+
     if (loading) {
         return (
             <View style={styles.courseCenteredContainer}>
@@ -128,9 +178,10 @@ const CourseScreen = ({ route }) => {
                         activeOpacity={0.7}
                         onPressIn={() => setIsPressedDelete(true)}
                         onPressOut={() => setIsPressedDelete(false)}
+                        onPress={toggleDeleteMode}
                     >
                         <Image source={require('../../assets/trash.png')} style={styles.courseButtonIcon} />
-                        <Text style={styles.courseSmallButtonText}>삭제</Text>
+                        <Text style={styles.courseSmallButtonText}>{isDeleteMode ? "취소" : "삭제"}</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -138,9 +189,10 @@ const CourseScreen = ({ route }) => {
                         activeOpacity={0.7}
                         onPressIn={() => setIsPressedEdit(true)}
                         onPressOut={() => setIsPressedEdit(false)}
+                        onPress={toggleEditMode}
                     >
                         <Image source={require('../../assets/pencil.png')} style={styles.courseButtonIcon} />
-                        <Text style={styles.courseSmallButtonText}>편집</Text>
+                        <Text style={styles.courseSmallButtonText}>{isEditMode ? "취소" : "편집"}</Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -152,39 +204,119 @@ const CourseScreen = ({ route }) => {
                             <Text style={styles.courseEmptyMessage}>새로운 폴더를 생성해 보세요!</Text>
                         </View>
                     ) : ( 
-                    <FlatList 
-                        data={folders}
-                        keyExtractor={(item) => item.id}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity 
-                                style={[styles.courseFolderItem, pressedFolder === item.id && styles.buttonPressed]} 
-                                onPress={() => navigation.navigate('CourseDetail', { folderId: item.id })}
-                                onPressIn={() => setPressedFolder(item.id)}
-                                onPressOut={() => setPressedFolder(null)}
-                            >
-                                {item.image && <Image source={{ uri: item.image }} style={styles.courseFolderImage} />}
-                                <View>
-                                    <Text style={styles.courseFolderTitle}>{item.title}</Text>
-                                    <Text style={styles.courseFolderDescription}>{item.description}</Text>
-                                    <Text style={styles.courseCourseCount}>{item.courseCount}개</Text>
-                                </View>
-                            </TouchableOpacity>
-                        )}
-                    />
+                        <FlatList 
+                            data={folders}
+                            keyExtractor={(item) => item.id}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity 
+                                    style={[styles.courseFolderItem, pressedFolder === item.id && styles.buttonPressed]} 
+                                    onPress={() => (isDeleteMode || isEditMode) ? toggleSelectFolder(item.id) : navigation.navigate('CourseFolderDetail', { 
+                                        folderId: Number(item.id), 
+                                        folderTitle: item.title, 
+                                        folderDescription: item.description 
+                                    })}                                
+                                    onPressIn={() => setPressedFolder(item.id)}
+                                    onPressOut={() => setPressedFolder(null)}
+                                >
+                                    {(isDeleteMode || isEditMode) && (
+                                        <View style={[styles.checkbox, selectedFolders.includes(item.id) && styles.checkboxSelected]} />
+                                    )}
+                                    {item.image && (
+                                        <Image 
+                                            source={typeof item.image === 'string' ? { uri: item.image } : item.image} 
+                                            style={styles.courseFolderImage} 
+                                        />
+                                    )}                                    
+                                    <View>
+                                        <Text style={styles.courseFolderTitle}>{item.title}</Text>
+                                        <Text style={styles.courseFolderDescription}>{item.description}</Text>
+                                        <Text style={styles.courseCourseCount}>{item.courseCount}개</Text>
+                                    </View>
+                                </TouchableOpacity>
+                            )}
+                        />
                     )}
                 </>
             )}
 
             <View style={styles.courseBottomContainer}>
-                <TouchableOpacity
-                    style={[styles.createCourseButton, isPressed && styles.createCourseButtonPressed]}
-                    activeOpacity={0.7}
-                    onPressIn={() => setIsPressed(true)}
-                    onPressOut={() => setIsPressed(false)}
-                >
-                    <Text style={styles.createCourseButtonText}>+ 코스 만들기</Text>
-                </TouchableOpacity>
+                { !isDeleteMode && !isEditMode && (
+                    <TouchableOpacity
+                        style={[styles.createCourseButton, isPressed && styles.createCourseButtonPressed]}
+                        activeOpacity={0.7}
+                        onPressIn={() => setIsPressed(true)}
+                        onPressOut={() => setIsPressed(false)}
+                    >
+                        <Text style={styles.createCourseButtonText}>+ 코스 만들기</Text>
+                    </TouchableOpacity>
+                )}
             </View>
+
+            <RenameFolderModal 
+                visible={activeModal === 'rename'}
+                folderName={modalData.folderName}
+                renameText={modalData.text}
+                onChangeText={(text) => setModalData((prev) => ({ ...prev, text }))} 
+                onClose={() => setActiveModal(null)}
+                onConfirm={() => console.log('폴더명 변경:', modalData.text)}
+            />
+
+            <RenameDescriptionModal 
+                visible={activeModal === 'description'}
+                descriptionText={modalData.text}
+                onChangeText={(text) => setModalData((prev) => ({ ...prev, text }))}
+                onClose={() => setActiveModal(null)}
+                onConfirm={() => console.log('설명 변경:', modalData.text)}
+            />
+
+            {isEditMode && selectedFolders.length > 0 && (
+                <View style={styles.editActionsContainer}>
+                    <TouchableOpacity 
+                        style={styles.editActionButton}
+                        onPress={() => {
+                            const selectedFolder = folders.find(folder => folder.id === selectedFolders[0]);
+                            if (selectedFolder) {
+                                openModal('rename', selectedFolder);
+                            }
+                        }}
+                    >
+                        <Text style={styles.editActionText}>폴더명 변경</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={styles.editActionButton}
+                        onPress={() => {
+                            const selectedFolder = folders.find(folder => folder.id === selectedFolders[0]);
+                            if (selectedFolder) {
+                                openModal('description', selectedFolder);
+                            }
+                        }}
+                    >
+                        <Text style={styles.editActionText}>설명 변경</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            <DeleteFolderModal 
+                visible={activeModal === 'delete'}
+                folderName={modalData.folderName}
+                onClose={() => setActiveModal(null)}
+                onConfirm={confirmDelete}
+            />
+
+            {isDeleteMode && selectedFolders.length > 0 && (
+                <TouchableOpacity 
+                    style={styles.deleteConfirmButton} 
+                    onPress={() => {
+                        const selectedFolder = folders.find(folder => folder.id === selectedFolders[0]);
+                        if (selectedFolder) {
+                            openModal('delete', selectedFolder);
+                        }
+                    }}
+                >
+                    <Text style={styles.deleteConfirmText}>삭제하기</Text>
+                </TouchableOpacity>
+            )}
         </View>
     );
 };
@@ -193,7 +325,7 @@ const styles = StyleSheet.create({
     courseContainer: {
         flex: 1,
         padding: 16,
-        backgroundColor: '#fff',
+        backgroundColor: '#FAFAFA',
     },
     courseCenteredContainer: {
         flex: 1,
@@ -213,9 +345,9 @@ const styles = StyleSheet.create({
     courseFolderButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#FAFAFA',
         paddingVertical: 8,
-        paddingHorizontal: 10,
+        paddingHorizontal: 5,
         borderRadius: 8,
     },
     
@@ -230,7 +362,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#fff',
         paddingVertical: 8,
-        paddingHorizontal: 12,
+        paddingHorizontal: 8,
         borderRadius: 8,
         borderWidth: 1,
         borderColor: '#E0E0E0',
@@ -240,13 +372,13 @@ const styles = StyleSheet.create({
     
     courseSmallButtonText: {
         fontSize: 12,
-        color: '#888',
-        marginLeft: 6,
+        color: '#888'
     },
     
     courseButtonIcon: {
-        width: 12,
-        height: 12,
+        width: 14,
+        height: 14,
+        marginRight: 4,
         tintColor: '#888',
     },
     courseTabContainer: {
@@ -297,8 +429,8 @@ const styles = StyleSheet.create({
         elevation: 3,
     },
     courseFolderImage: {
-        width: 60,
-        height: 60,
+        width: 70,
+        height: 70,
         borderRadius: 8,
         marginRight: 12,
     },
@@ -339,7 +471,109 @@ const styles = StyleSheet.create({
 
     buttonPressed: {
         backgroundColor: '#F0F0F0',
-    }    
+    },
+    checkbox: {
+        width: 20,
+        height: 20,
+        borderRadius: 10,
+        borderWidth: 2,
+        borderColor: '#888',
+        marginRight: 10,
+    },
+    checkboxSelected: {
+        backgroundColor: '#FF6F61',
+        borderColor: '#FF6F61',
+    },
+
+    editActionsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginTop: 5,
+        paddingVertical: 5,
+    },
+    editActionButton: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 12,
+        marginHorizontal: 10,
+        backgroundColor: '#FF6F61',
+        borderRadius: 10,
+    },
+    editActionText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+
+    deleteConfirmButton: {
+        backgroundColor: '#FF6F61',
+        paddingVertical: 12,
+        alignItems: 'center',
+        marginTop: 10,
+        borderRadius: 10,
+    },
+    deleteConfirmText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+    },
+    deleteModalContainer: {
+        backgroundColor: '#fff',
+        padding: 20,
+        borderRadius: 10,
+        width: '80%',
+        alignItems: 'center',
+    },
+    deleteModalText: {
+        fontSize: 16,
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    modalButtonContainer: {
+        flexDirection: 'row',
+    },
+    modalCancelButton: {
+        padding: 10,
+        marginRight: 10,
+    },
+    modalCancelText: {
+        color: '#888',
+    },
+    modalConfirmButton: {
+        padding: 10,
+        backgroundColor: '#FF6F61',
+        borderRadius: 5,
+    },
+    modalConfirmText: {
+        color: '#FFF',
+    },
+    editModalContainer: {
+        backgroundColor: '#FFFFFF',
+        padding: 20,
+        borderRadius: 10,
+        width: '85%',
+        alignItems: 'center',
+    },
+    editModalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+    editModalInput: {
+        width: '100%',
+        borderWidth: 1,
+        borderColor: '#ddd',
+        borderRadius: 5,
+        padding: 10,
+        fontSize: 16,
+        marginBottom: 15,
+    },
 });
 
 export default CourseScreen;
