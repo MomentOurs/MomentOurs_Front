@@ -33,7 +33,11 @@ yarn-error.*
 .DS_Store
 *.pem
 
-# local env files
+# 환경 변수 파일 보호
+.env
+.env.local
+.env.development
+.env.production
 .env*.local
 
 # typescript
