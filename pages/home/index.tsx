@@ -7,7 +7,9 @@ import { StackNavigationProp } from "@react-navigation/stack";
 
 type HomeStackParamList = {
     Home: undefined;
-    Settings: undefined;
+    MyPage: undefined;
+    NotificationPage: undefined;
+    MenuPage: undefined;
 };
 type HomeStackNavigationProp = StackNavigationProp<HomeStackParamList, "Home">;
 const HomeScreen = () => {
@@ -17,20 +19,37 @@ const HomeScreen = () => {
     useLayoutEffect(() => {
         navigation.setOptions({
             title: "홈", 
-            headerRight: () => ( 
+            headerLeft: () => ( 
                 <TouchableOpacity
-                    onPress={() => navigation.navigate("Settings")}
-                    style={{ marginRight: 15 }}
+                    onPress={() => navigation.navigate("MyPage")}
+                    style={{ marginLeft: 15 }}
                 >
-                    <Ionicons name="settings-outline" size={24} color="black" />
+                    <Ionicons name="person-outline" size={24} color="black" />
                 </TouchableOpacity>
             ),
+            headerRight: () => (
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <TouchableOpacity
+                    onPress={() => navigation.navigate("NotificationPage")}
+                    style={{marginRight: 15}}
+                >
+                        <Ionicons name="notifications-outline" size={24} color="black" />
+                    </TouchableOpacity>  
+                
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate("MenuPage")}
+                        style={{marginRight: 30}}
+                    >
+                        <Ionicons name="menu" size={24} color="black" />
+                    </TouchableOpacity>
+                </View>
+            )
         });
     }, [navigation]);
 
     return (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <Text>홈 화면</Text>
+            <Text>홈 화면!!!!</Text>
         </View>
     );
 }

@@ -2,15 +2,15 @@ import React from "react";
 import { View, Text } from "react-native";
 
 
-const MyPageModal = () => {
+const MenuModal = () => {
 
     return (
         <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <Text>마이페지이 화면</Text>
+            <Text>햄버거바 메뉴</Text>
         </View>
     );
 };
 
 
 
-export default MyPageModal;
+export default MenuModal;
