@@ -5,7 +5,7 @@ import QuestionsScreen from '../questions';
 import HomeScreen from '../home';
 import CourseNavigator from '../../src/screens/course/course-navigation';
 import MapScreen from '../map';
-import HomeStackNavigator from '../home/home-stack-navigator';
+import HomeStackNavigator from '../../src/screens/home/navigator/home-stack-navigator';
 
 const Tab = createBottomTabNavigator();
 

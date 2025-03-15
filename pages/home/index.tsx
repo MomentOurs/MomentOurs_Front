@@ -7,21 +7,21 @@ import { StackNavigationProp } from "@react-navigation/stack";
 
 type HomeStackParamList = {
     Home: undefined;
-    MyPage: undefined;
-    NotificationPage: undefined;
+    MyPageStack: undefined;
+    AlertPage: undefined;
     MenuPage: undefined;
 };
-type HomeStackNavigationProp = StackNavigationProp<HomeStackParamList, "Home">;
+type HomeStackNavigationProps = StackNavigationProp<HomeStackParamList, "Home">;
 const HomeScreen = () => {
 
-    const navigation = useNavigation<HomeStackNavigationProp>(); //
+    const navigation = useNavigation<HomeStackNavigationProps>(); //
 
     useLayoutEffect(() => {
         navigation.setOptions({
             title: "홈", 
             headerLeft: () => ( 
                 <TouchableOpacity
-                    onPress={() => navigation.navigate("MyPage")}
+                    onPress={() => navigation.navigate("MyPageStack")}
                     style={{ marginLeft: 15 }}
                 >
                     <Ionicons name="person-outline" size={24} color="black" />
@@ -30,7 +30,7 @@ const HomeScreen = () => {
             headerRight: () => (
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <TouchableOpacity
-                    onPress={() => navigation.navigate("NotificationPage")}
+                    onPress={() => navigation.navigate("AlertPage")}
                     style={{marginRight: 15}}
                 >
                         <Ionicons name="notifications-outline" size={24} color="black" />

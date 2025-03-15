@@ -1,16 +1,16 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
-const HomeContainer = () => {
+const CustomerServiceContainer = () => {
     return (
         <View style={{
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
         }}>
-            <Text>Home Tab</Text>
+            <Text>CustomerService Tab</Text>
         </View>
     );
 }
 
-export default HomeContainer;
+export default CustomerServiceContainer;
