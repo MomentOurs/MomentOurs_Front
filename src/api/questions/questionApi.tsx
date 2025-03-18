@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:8080/api/random-question';
 
-const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXJFbWFpbCI6IjExMTFAbmF2ZXIuY29tIiwicm9sZSI6IlJPTEVfTUVNQkVSIiwiaWF0IjoxNzQxNjAzNzEzLCJleHAiOjQ4Mzk3NjAzNzEzfQ.vhrQMO3zazm9xgtVq7SqvWBzTNXvcPm-YTAFk-4e96g'; 
+const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXJFbWFpbCI6IjExMTFAbmF2ZXIuY29tIiwicm9sZSI6IlJPTEVfTUVNQkVSIiwiaWF0IjoxNzQyMjkzMzY2LCJleHAiOjQ4Mzk4MjkzMzY2fQ.I-pg6zBtD7jpD23Bp1idpnNQM8744d9lJePi7lFfaJU'; 
 
 
 export const getRandomQuestion = async () => {

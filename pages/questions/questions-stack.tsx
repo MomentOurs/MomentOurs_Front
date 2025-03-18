@@ -1,16 +1,17 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
 import QuestionsScreen from '../../src/screens/questions/questions-container';
+import QuestionsRegisterScreen from '../../src/screens/questions/questions-register';
 
 type StackParamList = {
     RandomQuestions: undefined;
+    QuestionsRegister: undefined;
 };
 
 const Stack = createStackNavigator<StackParamList>();
 
-const RandomQuestionsStack: React.FC = () => {
+const RandomQuestionsStack = () => {
     return (
-
         <Stack.Navigator
             {...({ id: undefined } as any)} // 강제로 id 속성 제거
             screenOptions={{
@@ -27,12 +28,11 @@ const RandomQuestionsStack: React.FC = () => {
                 },
             }}
         >
-
             <Stack.Screen
                 name="RandomQuestions"
                 component={QuestionsScreen}
-                options={{ title: '랜덤질문' }}
             />
+            <Stack.Screen name="QuestionsRegister" component={QuestionsRegisterScreen} options={{ title: '랜덤질문' }}/>
         </Stack.Navigator>
     );
 };

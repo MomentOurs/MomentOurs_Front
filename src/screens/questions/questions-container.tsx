@@ -15,9 +15,10 @@ import DeleteModal from '../../components/common/DeleteModal';
 
 type RootStackParamList = {
     Questions: undefined;
+    QuestionsRegister: undefined;
 };
 type Props = {
-    navigation: NativeStackNavigationProp<RootStackParamList, 'Questions'>;
+    navigation: NativeStackNavigationProp<RootStackParamList>;
 };
 
 const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
@@ -127,16 +128,22 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                         </TouchableOpacity>
                     </View>
 
-                    <TextInput
-                        style={styles.answerInput}
-                        placeholder="이곳을 눌러서 답변을 입력해 주세요."
-                        placeholderTextColor="#7B7B7B"
-                        multiline={true}
-                        numberOfLines={4}
-                        textAlignVertical="top"
-                        value={myAnswer || ""}
-                        onChangeText={setMyAnswer}
-                    />
+                    <TouchableOpacity
+                        onPress={() => navigation.navigate('QuestionsRegister')} // ✅ 새로운 화면으로 이동
+                        activeOpacity={0.8} // 터치 효과 없애기
+                    >
+                        <TextInput
+                            style={styles.answerInput}
+                            placeholder="이곳을 눌러서 답변을 입력해 주세요."
+                            placeholderTextColor="#7B7B7B"
+                            multiline={true}
+                            numberOfLines={4}
+                            textAlignVertical="top"
+                            value={myAnswer || ""}
+                            editable={false}
+                            pointerEvents="none" // ✅ 터치 이벤트 차단
+                        />
+                    </TouchableOpacity>
                 </View>
 
                 {/* 🔹 상대방의 답변 필드 */}

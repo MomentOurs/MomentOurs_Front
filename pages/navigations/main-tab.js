@@ -2,7 +2,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { TouchableOpacity } from 'react-native';
 import ClendarScreen from '../clendar';
-import QuestionsScreen from '../questions';
+import QuestionsScreen from '../questions/index';
 import HomeScreen from '../home';
 import CourseScreen from '../course';
 import MapScreen from '../map';

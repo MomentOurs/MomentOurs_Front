@@ -1,6 +1,6 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import MainTabsNavigator from './main-tab';
-import RandomQuestionsStack from './questions-stack';
+import RandomQuestionsStack from '../questions/questions-stack';
 
 const Stack = createStackNavigator();
 
@@ -14,7 +14,6 @@ export default function LoggedInStack() {
                 options={{ headerShown: false }}
             />
 
-            <Stack.Screen name="RandomQuestions" component={RandomQuestionsStack} />
         </Stack.Navigator>
     );
 }
