@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Modal, TextInput } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { RouteProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from '../../src/screens/course/course-navigation';
 import CourseLayout from '../../src/screens/course/course-layout';
@@ -14,9 +14,13 @@ type Folder = {
     image?: string;
 };
 
+type CourseScreenProps = {
+    route: RouteProp<CourseStackParamList, 'CourseScreen'>;
+};
+
 const tabs = ['데이트 코스', '내 코스', '즐겨찾기'];
 
-const CourseScreen = ({ route }) => {
+const CourseScreen: React.FC<CourseScreenProps> = ({ route }) => {
     const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
 
     const [folders, setFolders] = useState<Folder[]>([]);
@@ -120,14 +124,10 @@ const CourseScreen = ({ route }) => {
         setIsDeleteMode(false);
     };
 
-    const openModal = (type: 'rename' | 'description' | 'delete', folder: Folder) => {
-        if (type === 'rename') {
-            setModalData({ folderName: folder.title, text: folder.title }); // 🛠 폴더명을 초기 값으로 설정
-        } else {
-            setModalData({ folderName: folder.title, text: folder.description }); // 기존 설명 유지
-        }
+    const openModal = (type: 'rename' | 'description', folder: Folder) => {
+        setModalData({ folderName: folder.title, text: type === 'rename' ? folder.title : folder.description });
         setActiveModal(type);
-    };    
+    };
 
     if (loading) {
         return (
@@ -209,7 +209,34 @@ const CourseScreen = ({ route }) => {
                     )}
                 />
             )}
-    
+
+            {!isDeleteMode && !isEditMode && (
+                <View style={styles.courseBottomContainer}>
+                    <TouchableOpacity 
+                        style={styles.createCourseButton} 
+                        onPress={() => navigation.navigate('CourseCreate')}>
+                        <Text style={styles.createCourseButtonText}>+ 코스 만들기</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            {isDeleteMode && selectedFolders.length > 0 && (
+                <TouchableOpacity style={styles.confirmButton} onPress={() => setActiveModal('delete')}>
+                    <Text style={styles.confirmButtonText}>삭제하기</Text>
+                </TouchableOpacity>
+            )}
+
+            {isEditMode && selectedFolders.length === 1 && (
+                <View style={styles.editActionsContainer}>
+                    <TouchableOpacity style={styles.editActionButton} onPress={() => openModal('rename', folders.find(f => f.id === selectedFolders[0])!)}>
+                        <Text style={styles.editActionText}>폴더명 수정</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.editActionButton} onPress={() => openModal('description', folders.find(f => f.id === selectedFolders[0])!)}>
+                        <Text style={styles.editActionText}>설명 수정</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
             <RenameFolderModal 
                 visible={activeModal === 'rename'}
                 folderName={modalData.folderName}
@@ -364,20 +391,30 @@ const styles = StyleSheet.create({
         color: '#999',
     },
     courseBottomContainer: {
-        marginTop: 'auto',
-        alignItems: 'flex-end',
-        paddingVertical: 10,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 15,
     },
-    
+    createCourseButtonContainer: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+    },
     createCourseButton: {
         backgroundColor: '#FF6F61',
-        paddingVertical: 10,
-        paddingHorizontal: 12,
-        borderRadius: 15,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 20,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 5,
+        elevation: 3,
     },
-    
     createCourseButtonText: {
-        color: '#fff',
+        color: '#FFF',
         fontSize: 16,
         fontWeight: 'bold',
     },
@@ -400,7 +437,19 @@ const styles = StyleSheet.create({
         backgroundColor: '#FF6F61',
         borderColor: '#FF6F61',
     },
-
+    confirmButton: {
+        backgroundColor: '#FF6F61',
+        paddingVertical: 12,
+        alignItems: 'center',
+        marginTop: 10,
+        borderRadius: 10,
+        marginHorizontal: 20,
+    },
+    confirmButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
     editActionsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
