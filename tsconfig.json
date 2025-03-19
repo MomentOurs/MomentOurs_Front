@@ -11,5 +11,6 @@
     "resolveJsonModule": true,
     "moduleResolution": "node",
     "types": ["@types/react", "@types/react-native", "@env"]
-  }
+  },
+  "include": ["env.d.ts"]
 }
