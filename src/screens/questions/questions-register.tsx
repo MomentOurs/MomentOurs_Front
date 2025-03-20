@@ -1,33 +1,89 @@
-import React from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
+import { RouteProp, useNavigation } from "@react-navigation/native";
+import { createAnswer } from "../../api/index";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
-const RandomQuestionScreen = () => {
+type RootStackParamList = {
+    QuestionsRegister: {
+        questionId: number;
+        questionText: string;
+        currentDate: string;
+        userQuesId: number;
+    };
+    RandomQuestions: undefined;
+};
+
+type Props = {
+    route: RouteProp<RootStackParamList, "QuestionsRegister">;
+};
+
+const RandomQuestionScreen: React.FC<Props> = ({ route }) => {
+    const { questionId, questionText, currentDate, userQuesId } = route.params;
+
+    const [answer, setAnswer] = useState(""); 
+    const [loading, setLoading] = useState(false);
+
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>(); // ✅ 네비게이션 사용
+
+    // 🔹 답변 입력 버튼 클릭 시 API 요청
+    const handleSubmitAnswer = async () => {
+        if (!answer.trim()) {
+            Alert.alert("알림", "답변을 입력해 주세요!");
+            return;
+        }
+    
+        setLoading(true); // 로딩 시작
+    
+        try {
+            await createAnswer(userQuesId, answer);
+            
+            Alert.alert("성공", "답변이 등록되었습니다!", [
+                { 
+                    text: "확인", 
+                    onPress: () => navigation.navigate("RandomQuestions") // ✅ 정상적인 화면 이동 처리
+                }
+            ]);
+            setAnswer(""); // 입력값 초기화
+        } catch (error) {
+            Alert.alert("오류", "답변을 등록하는 중 문제가 발생했습니다.");
+        } finally {
+            setLoading(false); // 로딩 종료
+        }
+    };
+
     return (
         <View style={styles.container}>
 
             {/* 질문 번호 */}
-            <Text style={styles.questionNumber}>#120번째 질문</Text>
+            <Text style={styles.questionNumber}>#{questionId}번째 질문</Text>
 
             {/* 질문 내용 */}
             <Text style={styles.questionText}>
-                사랑하는 연인과 가장 행복했던{"\n"}시간은 언제인가요?
+            {questionText}
             </Text> 
 
             {/* 날짜 */}
-            <Text style={styles.dateText}>2025.01.04</Text>
+            <Text style={styles.dateText}>{currentDate}</Text>
 
             {/* 답변 입력 영역 */}
-            <Text style={styles.answerLabel}>지연님의 답변</Text>
+            <Text style={styles.answerLabel}>나의 답변</Text>
             <TextInput
                 style={styles.input}
                 placeholder="답변을 입력해 주세요."
                 placeholderTextColor="#BDBDBD"
                 multiline
+                value={answer}
+                onChangeText={setAnswer}
             />
 
             {/* 입력 버튼 */}
-            <TouchableOpacity style={styles.button}>
-                <Text style={styles.buttonText}>답변 입력</Text>
+            <TouchableOpacity
+                style={[styles.button, loading && { opacity: 0.5 }]} // 로딩 중이면 버튼 비활성화
+                onPress={handleSubmitAnswer}
+                disabled={loading} // 로딩 중이면 클릭 방지
+            >
+                <Text style={styles.buttonText}>{loading ? "등록 중..." : "답변 입력"}</Text>
             </TouchableOpacity>
         </View>
     );
@@ -54,11 +110,10 @@ const styles = StyleSheet.create({
         marginBottom: 5,
     },
     questionText: {
-        fontSize: 18,
-        color: "#333",
-        textAlign: "center",
-        fontWeight: "500",
-        marginBottom: 5,
+        fontSize: 16,
+        textAlign: 'center',
+        marginVertical: 10,
+        marginHorizontal: 60,
     },
     dateText: {
         fontSize: 14,

@@ -15,7 +15,7 @@ import DeleteModal from '../../components/common/DeleteModal';
 
 type RootStackParamList = {
     Questions: undefined;
-    QuestionsRegister: undefined;
+    QuestionsRegister: { questionId: number; questionText: string; currentDate: string; userQuesId: number; };
     QuestionComment: undefined;
 };
 type Props = {
@@ -25,6 +25,7 @@ type Props = {
 const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
     const [questionId, setQuestionId] = useState<number | null>(null);
     const [questionText, setQuestionText] = useState<string | null>(null);
+    const [userQuesId, setUserQuesId] = useState<number | null>(null);
     const [myAnswer, setMyAnswer] = useState<string | null>(null);
     const [otherAnswer, setOtherAnswer] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
@@ -48,6 +49,7 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                 if (questionData.success && questionData.data) {
                     setQuestionId(questionData.data.coupleQuesNo);
                     setQuestionText(questionData.data.randomQuestion.quesContent);
+                    setUserQuesId(questionData.data.userQuesId);
 
                     const answerData = await getQuestionAnswers(questionData.data.userQuesId);
                     if (answerData.success && answerData.data) {
@@ -130,8 +132,19 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                     </View>
 
                     <TouchableOpacity
-                        onPress={() => navigation.navigate('QuestionsRegister')} // ✅ 새로운 화면으로 이동
-                        activeOpacity={0.8} // 터치 효과 없애기
+                        onPress={() =>
+                            myAnswer
+                                ? null // ✅ 답변이 이미 작성된 경우 아무 동작도 하지 않음
+                                : navigation.navigate('QuestionsRegister', {
+                                    questionId,
+                                    questionText,
+                                    currentDate,
+                                    userQuesId,
+                                })
+                        }
+                        activeOpacity={0.8}
+                        disabled={!!myAnswer} // ✅ myAnswer가 있으면 비활성화
+                        style={[styles.answerInputContainer, myAnswer && { opacity: 0.5 }]} // ✅ 시각적으로 흐리게 처리
                     >
                         <TextInput
                             style={styles.answerInput}
@@ -275,6 +288,13 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         fontWeight: 'bold',
+    },
+    answerInputContainer: {
+        width: '100%',
+        borderRadius: 10,
+        backgroundColor: '#F4F4F4',
+        minHeight: 45,
+        justifyContent: 'center',
     },
     chatButton: {
         position: 'absolute',

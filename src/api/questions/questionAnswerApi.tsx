@@ -29,25 +29,18 @@ export const deleteAnswer = async (userQuesId: number) => {
     }
 };
 
-export const createAnswer = async (quesAnsContent: string, userQuesId: number) => {
+export const createAnswer = async (userQuesId: number, quesAnsContent: string) => {
     try {
         const response = await axios.post(
-            `${API_BASE_URL}`,
+            `${API_BASE_URL}`, 
+            { userQuesId, quesAnsContent }, // 요청 바디
             {
-                quesAnsContent,
-                userQuesId,
-            },
-            {
-                headers: {
-                    "Authorization": TOKEN,
-                    "Content-Type": "application/json",
-                },
+                headers: { Authorization: `Bearer ${TOKEN}` }, // 🔹 토큰 추가
             }
         );
-
-        return response.data; // 성공 응답 반환
+        return response.data;
     } catch (error) {
-        console.error("❌ 답변 등록 중 오류 발생:", error);
+        console.error("❌ 답변 작성 중 오류 발생:", error);
         throw error;
     }
 };
