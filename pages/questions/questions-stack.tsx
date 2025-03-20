@@ -3,12 +3,13 @@ import { createStackNavigator } from '@react-navigation/stack';
 import QuestionsScreen from '../../src/screens/questions/questions-container';
 import QuestionsRegisterScreen from '../../src/screens/questions/questions-register';
 import QuestionCommentScreen from '../../src/screens/questions/questions-comment';
-
+import QuestionsListScreen from '../../src/screens/questions/questions-list';
 
 type StackParamList = {
     RandomQuestions: undefined;
     QuestionsRegister: undefined;
     QuestionComment: undefined;
+    QuestionsList: undefined;
 };
 
 const Stack = createStackNavigator<StackParamList>();
@@ -37,6 +38,7 @@ const RandomQuestionsStack = () => {
             />
             <Stack.Screen name="QuestionsRegister" component={QuestionsRegisterScreen} />
             <Stack.Screen name="QuestionComment" component={QuestionCommentScreen} />
+            <Stack.Screen name="QuestionsList" component={QuestionsListScreen} />
 
         </Stack.Navigator>
     );
