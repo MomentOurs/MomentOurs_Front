@@ -1,27 +1,75 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { SignUpStackParamList } from '../../components/types/signup/signuptypes';
+import { RouteProp } from '@react-navigation/native';
+import axios from 'axios';
 
 // Stack Navigator의 타입 정의
-type SignUpStackParamList = {
-    SignUp1: undefined;
-    SignUp2: undefined;
-    SignUp3: undefined;
-  };
-
+// type SignUpStackParamList = {
+//     SignUp1: undefined;
+//     SignUp2: { email: string; password: string };
+//     SignUp3: {
+//       email: string;
+//       password: string;
+//       name: string;
+//       nickname: string;
+//     };
+//     VerifyEmail: {
+//       email: string;
+//       password: string;
+//       name: string;
+//       nickname: string;
+//       birthDate: string;
+//       selectedGender: string;
+//       mbti: string;
+//     };
+//     LoginScreen: undefined;
+//   };
+  
 // navigation의 타입 정의
 type SignUpScreen3NavigationProp = StackNavigationProp<SignUpStackParamList, 'SignUp3'>;
+type SignUpScreen3RouteProp = RouteProp<SignUpStackParamList, 'SignUp3'>;
 
 // Props 타입 정의
 interface SignUpScreen3Props {
   navigation: SignUpScreen3NavigationProp;
+  route: SignUpScreen3RouteProp;
 }
 
-const SignUpScreen3: React.FC<SignUpScreen3Props> = ({ navigation }) => {
+const SignUpScreen3: React.FC<SignUpScreen3Props> = ({ navigation, route }) => {
+    const { email, password, name, nickname } = route.params;
     const [birthDate, setBirthDate] = useState('');
     const [selectedGender, setSelectedGender] = useState<'여성' | '남성' | null>(null);
     const [mbti, setMbti] = useState('');
+    const isFormValid = birthDate.trim() !== '' && selectedGender !== null;
+
+
+    const handleSendEmail = async () => {
+        try {
+            console.log("📢 이메일 인증 코드 요청 데이터:", { memberEmail: email });
+    
+            const response = await axios.post(
+                'http://localhost:8080/api/member/email/send',
+                { member_email: email },
+                { headers: { 'Content-Type': 'application/json' } } // 헤더 추가
+            );
+    
+            console.log("서버 응답:", response.data);
+    
+            if (response.data?.success) {
+                Alert.alert('성공', '이메일로 인증 코드가 발송되었습니다.');
+                navigation.navigate('VerifyEmail', { email, password, name, nickname, birthDate, selectedGender: selectedGender ?? '', mbti });
+            } else {
+                Alert.alert('⚠️ 오류', response.data.message);
+            }
+        } catch (error) {
+            console.error("이메일 인증 코드 요청 실패:", error);
+            Alert.alert('오류', '서버 오류가 발생했습니다.');
+        }
+    };
+    
 
     return( 
         <View style={styles.container}>
@@ -76,9 +124,16 @@ const SignUpScreen3: React.FC<SignUpScreen3Props> = ({ navigation }) => {
                     />
                 </View>
             </View>
-            <TouchableOpacity style={styles.nextButton} onPress={() => alert('회원가입 완료')}>
+            {/* <TouchableOpacity style={styles.nextButton} onPress={() => alert('회원가입 완료')}>
                 <Text style={styles.nextButtonText}>회원가입 완료</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
+<TouchableOpacity 
+  style={[styles.nextButton, !isFormValid && styles.disabledButton]}
+  onPress={handleSendEmail}
+  disabled={!isFormValid}
+>
+  <Text style={styles.nextButtonText}>회원가입 완료</Text>
+</TouchableOpacity>
         </View>
 )}
 
@@ -181,6 +236,9 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+    disabledButton: {
+        backgroundColor: '#ccc',
+      },
 })
 
 export default SignUpScreen3;

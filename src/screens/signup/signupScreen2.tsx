@@ -1,26 +1,79 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { SignUpStackParamList } from '../../components/types/signup/signuptypes';
+import { RouteProp } from '@react-navigation/native';
+import axios from 'axios'; 
 
 // Stack Navigator의 타입 정의
-type SignUpStackParamList = {
-    SignUp1: undefined;
-    SignUp2: undefined;
-    SignUp3: undefined;
-  };
+// type SignUpStackParamList = {
+//     SignUp1: undefined;
+//     SignUp2: { email: string; password: string };
+//     SignUp3: {
+//       email: string;
+//       password: string;
+//       name: string;
+//       nickname: string;
+//     };
+//     VerifyEmail: {
+//       email: string;
+//       password: string;
+//       name: string;
+//       nickname: string;
+//       birthDate: string;
+//       selectedGender: string;
+//       mbti: string;
+//     };
+//     LoginScreen: undefined;
+//   };
+  
 
 // navigation의 타입 정의
 type SignUpScreen2NavigationProp = StackNavigationProp<SignUpStackParamList, 'SignUp2'>;
+type SignUpScreen2RouteProp = RouteProp<SignUpStackParamList, 'SignUp2'>;
 
 // Props 타입 정의
 interface SignUpScreen2Props {
   navigation: SignUpScreen2NavigationProp;
+  route: SignUpScreen2RouteProp;
 }
 
-const SignUpScreen2: React.FC<SignUpScreen2Props> = ({ navigation }) => {
+const SignUpScreen2: React.FC<SignUpScreen2Props> = ({ navigation, route }) => {
+    const { email, password } = route.params;
     const [name, setName] = useState('');
     const [nickname, setNickname] = useState('');
+    const [isNicknameChecked, setIsNicknameChecked] = useState(false); 
+    const isFormValid = name.trim() !== '' && isNicknameChecked;
+
+
+    const handleCheckNickname = async () => {
+        if (!nickname) {
+            Alert.alert("오류", "닉네임을 입력해주세요.");
+            return;
+        }
+
+        try {
+            console.log("닉네임 중복 확인 요청:", { memberNickname: nickname });
+
+            const response = await axios.get(`http://localhost:8080/api/member/check-nickname`, {
+                params: { memberNickname: nickname }
+            });
+
+            console.log("서버 응답:", response.data);
+
+            Alert.alert("결과", response.data.data);
+
+            if (response.data.data === "사용할 수 있는 닉네임입니다.") {
+                setIsNicknameChecked(true); 
+            } else {
+                setIsNicknameChecked(false); 
+            }
+        } catch (error) {
+            console.error("닉네임 중복 확인 오류:", error);
+            Alert.alert("오류", "서버 오류가 발생했습니다.");
+        }
+    };
     
     return (
         <View style={styles.container}>
@@ -61,18 +114,32 @@ const SignUpScreen2: React.FC<SignUpScreen2Props> = ({ navigation }) => {
                         value={nickname}
                         onChangeText={setNickname}
                     />
-                    <TouchableOpacity style={styles.checkButton}>
+                    <TouchableOpacity 
+                        style={[styles.checkButton, isNicknameChecked && styles.disabledButton]} 
+                        onPress={handleCheckNickname} 
+                        disabled={isNicknameChecked} // 중복 확인 완료 시 비활성화
+                    >
                         <Text style={styles.checkButtonText}>중복 확인</Text>
                     </TouchableOpacity>
                 </View>
             </View>
             {/* 계속하기 버튼 */}
             <TouchableOpacity 
-                style={styles.nextButton} 
-                onPress={() => navigation.navigate('SignUp3')}
+                style={[
+                    styles.nextButton, 
+                    !isFormValid ? styles.disabledButton : null
+                ]}
+                onPress={() => navigation.navigate('SignUp3', {
+                    email,
+                    password,
+                    name,
+                    nickname
+                })}
+                disabled={!isFormValid}
             >
                 <Text style={styles.nextButtonText}>계속하기</Text>
             </TouchableOpacity>
+
         </View>
     );
 };
@@ -152,6 +219,9 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 14,
         fontWeight: 'bold',
+    },
+    disabledButton: {
+        backgroundColor: '#ccc', 
     },
     nextButton: {
         width: '100%',

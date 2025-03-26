@@ -1,15 +1,31 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // 뒤로가기 아이콘 사용
 import { StackNavigationProp } from '@react-navigation/stack';
+import { SignUpStackParamList } from '../../components/types/signup/signuptypes';
+import axios from 'axios'; 
 
 // Stack Navigator의 타입 정의
-type SignUpStackParamList = {
-  SignUp1: undefined;
-  SignUp2: undefined;
-  SignUp3: undefined;
-};
-
+// type SignUpStackParamList = {
+//   SignUp1: undefined;
+//   SignUp2: { email: string; password: string };
+//   SignUp3: {
+//     email: string;
+//     password: string;
+//     name: string;
+//     nickname: string;
+//   };
+//   VerifyEmail: {
+//     email: string;
+//     password: string;
+//     name: string;
+//     nickname: string;
+//     birthDate: string;
+//     selectedGender: string;
+//     mbti: string;
+//   };
+//   LoginScreen: undefined;
+// };
 // navigation의 타입 정의
 type SignUpScreen1NavigationProp = StackNavigationProp<SignUpStackParamList, 'SignUp1'>;
 
@@ -20,8 +36,47 @@ interface SignUpScreen1Props {
 
 const SignUpScreen1: React.FC<SignUpScreen1Props> = ({ navigation }) => {
   const [email, setEmail] = useState('');
+  const [emailAvailable, setEmailAvailable] = useState<boolean | null>(null);
+  const [isEmailChecked, setIsEmailChecked] = useState(false);  // 중복확인 여부
   const [password, setPassword] = useState('');
+  const [passwordMatch, setPasswordMatch] = useState<boolean | null>(null);
   const [confirmPassword, setConfirmPassword] = useState('');
+
+  
+const checkEmail = async () => {
+    if (!email.trim()) {
+        Alert.alert("오류", "이메일을 입력해주세요.");
+        return;
+    }
+
+    try {
+        console.log("이메일 중복 확인 요청:", email);
+
+        const response = await axios.get(`http://localhost:8080/api/member/check-email`, {
+            params: { memberEmail: email }
+        });
+
+        console.log("백엔드 응답 데이터:", response.data);
+
+        if (response.data && response.data.success) {
+            Alert.alert("결과", response.data.data);
+
+            if (response.data.data === "사용할 수 있는 이메일입니다.") {
+                setIsEmailChecked(true); // 중복 확인 완료 시 비활성화
+            }
+        } else {
+            Alert.alert("오류", "서버에서 예상치 못한 응답이 왔습니다.");
+        }
+    } catch (error) {
+        console.error("이메일 중복 확인 오류:", error);
+        Alert.alert("오류", "서버 오류가 발생했습니다.");
+    }
+};
+
+const handleConfirmPasswordChange = (text: string) => {
+  setConfirmPassword(text);
+  setPasswordMatch(text === password);
+};
 
   return (
     <View style={styles.container}>
@@ -44,15 +99,23 @@ const SignUpScreen1: React.FC<SignUpScreen1Props> = ({ navigation }) => {
 
         <Text style={styles.label}>이메일</Text>
         <View style={styles.inputRow}>
-          <TextInput 
+        <TextInput 
             style={styles.input} 
             placeholder="이메일 주소를 입력해 주세요" 
             placeholderTextColor="#aaa" 
             value={email}
             onChangeText={setEmail}
+            autoCapitalize="none" 
+            editable={!isEmailChecked} 
           />
-          <TouchableOpacity style={styles.checkButton}>
-            <Text style={styles.checkButtonText}>중복 확인</Text>
+          <TouchableOpacity 
+            style={[styles.checkButton, isEmailChecked && styles.disabledButton]} 
+            onPress={checkEmail} 
+            disabled={isEmailChecked}
+          >
+            <Text style={styles.checkButtonText}>
+              {isEmailChecked ? "확인 완료" : "중복 확인"}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -70,21 +133,38 @@ const SignUpScreen1: React.FC<SignUpScreen1Props> = ({ navigation }) => {
 
         <Text style={styles.label}>비밀번호 확인</Text>
         <View style={styles.inputRow}>  
-          <TextInput 
+          {/* <TextInput 
             style={styles.input} 
             placeholder="8~16자의 영문, 숫자, 특수기호" 
             secureTextEntry 
             placeholderTextColor="#aaa" 
             value={confirmPassword}
             onChangeText={setConfirmPassword}
+          /> */}
+          <TextInput 
+            style={styles.input} 
+            placeholder="8~16자의 영문, 숫자, 특수기호" 
+            secureTextEntry 
+            placeholderTextColor="#aaa" 
+            value={confirmPassword}
+            onChangeText={handleConfirmPasswordChange}
           />
         </View>
+        {passwordMatch !== null && (
+        <Text style={{ color: passwordMatch ? 'green' : 'red', marginTop: -20, marginBottom: 20 }}>
+          {passwordMatch ? '비밀번호가 일치합니다.' : '비밀번호가 일치하지 않습니다.'}
+        </Text>
+)}
       </View>
 
       {/* 계속하기 버튼 */}
       <TouchableOpacity 
-        style={styles.nextButton} 
-        onPress={() => navigation.navigate('SignUp2')}
+        style={[
+          styles.nextButton, 
+          (!isEmailChecked || !passwordMatch) && styles.disabledButton
+        ]}
+        onPress={() => navigation.navigate('SignUp2', { email, password })}
+        disabled={!isEmailChecked || !passwordMatch}
       >
         <Text style={styles.nextButtonText}>계속하기</Text>
       </TouchableOpacity>
@@ -170,6 +250,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  disabledButton: {
+    backgroundColor: '#ccc', 
   },
   /* 계속하기 버튼 */
   nextButton: {
