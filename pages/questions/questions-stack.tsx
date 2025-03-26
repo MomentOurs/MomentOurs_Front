@@ -4,12 +4,14 @@ import QuestionsScreen from '../../src/screens/questions/questions-container';
 import QuestionsRegisterScreen from '../../src/screens/questions/questions-register';
 import QuestionCommentScreen from '../../src/screens/questions/questions-comment';
 import QuestionsListScreen from '../../src/screens/questions/questions-list';
+import QuestionsUpdateScreen from '../../src/screens/questions/questions-update';
 
 type StackParamList = {
     RandomQuestions: undefined;
     QuestionsRegister: undefined;
     QuestionComment: undefined;
     QuestionsList: undefined;
+    QuestionsUpdate: undefined;
 };
 
 const Stack = createStackNavigator<StackParamList>();
@@ -39,6 +41,7 @@ const RandomQuestionsStack = () => {
             <Stack.Screen name="QuestionsRegister" component={QuestionsRegisterScreen} />
             <Stack.Screen name="QuestionComment" component={QuestionCommentScreen} />
             <Stack.Screen name="QuestionsList" component={QuestionsListScreen} />
+            <Stack.Screen name="QuestionsUpdate" component={QuestionsUpdateScreen} />
 
         </Stack.Navigator>
     );

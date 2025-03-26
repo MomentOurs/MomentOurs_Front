@@ -44,3 +44,19 @@ export const createAnswer = async (userQuesId: number, quesAnsContent: string) =
         throw error;
     }
 };
+
+export const updateAnswer = async (quesAnswerId: number, quesAnsContent: string) => {
+    try {
+        const response = await axios.patch(
+            `${API_BASE_URL}/${quesAnswerId}`,
+            { quesAnsContent },
+            {
+                headers: { Authorization: `Bearer ${TOKEN}` },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("❌ 답변 수정 중 오류 발생:", error);
+        throw error;
+    }
+};

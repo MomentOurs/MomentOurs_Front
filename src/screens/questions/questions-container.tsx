@@ -17,6 +17,7 @@ type RootStackParamList = {
     Questions: undefined;
     QuestionsRegister: { questionId: number; questionText: string; currentDate: string; userQuesId: number; };
     QuestionComment: undefined;
+    QuestionsUpdate: { questionId: number; questionText: string; currentDate: string; quesAnswerId: number; myAnswer: string; };
 };
 type Props = {
     navigation: NativeStackNavigationProp<RootStackParamList>;
@@ -26,6 +27,7 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
     const [questionId, setQuestionId] = useState<number | null>(null);
     const [questionText, setQuestionText] = useState<string | null>(null);
     const [userQuesId, setUserQuesId] = useState<number | null>(null);
+    const [quesAnswerId, setAnswerId] = useState<number | null>(null);
     const [myAnswer, setMyAnswer] = useState<string | null>(null);
     const [otherAnswer, setOtherAnswer] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
@@ -55,6 +57,7 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                     if (answerData.success && answerData.data) {
                         setMyAnswer(answerData.data.myAnswer || "이곳을 눌러서 답변을 입력해 주세요.");
                         setOtherAnswer(answerData.data.otherAnswer || "상대방이 아직 답변하지 않았어요.");
+                        setAnswerId(answerData.data.quesAnswerId);
                     }
                 }
             } catch (error) {
@@ -116,7 +119,16 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                         {/* ✏️ 수정 아이콘 */}
                         <TouchableOpacity
                             style={styles.iconButton}
-                            onPress={() => console.log("수정 버튼 클릭")}
+                            onPress={() => {
+                                if (!myAnswer) return; // ✅ 답변이 없는 경우 수정 불가능
+                                navigation.navigate('QuestionsUpdate', {
+                                    questionId,
+                                    questionText,
+                                    currentDate,
+                                    quesAnswerId,
+                                    myAnswer, // ✅ 현재 답변도 함께 전달
+                                });
+                            }}
                         >
                             <Image source={require('../../../assets/images/common/edit-icon.png')} style={styles.icon} />
                         </TouchableOpacity>
