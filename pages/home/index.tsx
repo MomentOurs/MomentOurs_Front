@@ -3,6 +3,7 @@ import {  View, Text, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
+import HomeContainer from "../../src/screens/home/container/home-container";
 
 
 type HomeStackParamList = {
@@ -18,7 +19,7 @@ const HomeScreen = () => {
 
     useLayoutEffect(() => {
         navigation.setOptions({
-            title: "홈", 
+            title: "Momentours", 
             headerLeft: () => ( 
                 <TouchableOpacity
                     onPress={() => navigation.navigate("MyPageStack")}
@@ -48,9 +49,7 @@ const HomeScreen = () => {
     }, [navigation]);
 
     return (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <Text>홈 화면!!!!</Text>
-        </View>
+        <HomeContainer/>
     );
 }
 

@@ -1,8 +1,8 @@
 import React from "react";
-import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList } from "react-native";
+import { View, Text, StyleSheet, Image, TouchableOpacity, FlatList, Button } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { useNavigation, NavigationContainer } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 
 {/*마이페이지 페이지*/}
 
@@ -11,12 +11,10 @@ type MyPageStackParamList = {
     MyProfile: undefined;
     MemoriesHistory: undefined;
     Notice: undefined;
-    CustomerService: undefined;
+    CustomerServiceStackNavigator: undefined;
     MyInquiries: undefined;
 };
-
 type MyPageStackNavigationProps = StackNavigationProp<MyPageStackParamList, "MyPage">;
-
 
 type IconNames =
     | "person-outline"
@@ -32,19 +30,16 @@ const topMenuItems: { id: string; title: string; icon: IconNames; screen: keyof 
     
 const bottomMenuItems: { id: string; title: string; icon: IconNames; screen: keyof MyPageStackParamList }[] = [
     { id: "3", title: "공지사항", icon: "megaphone-outline", screen: "Notice" },
-    { id: "4", title: "고객센터", icon: "call-outline", screen: "CustomerService" },
-    { id: "5", title: "문의 내역", icon: "reader-outline", screen: "MyInquiries" }
+    { id: "4", title: "고객센터", icon: "call-outline", screen: "CustomerServiceStackNavigator" },
+    /*{ id: "5", title: "문의", icon: "reader-outline", screen: "MyInquiries" }*/
 ];
 
 const MyPageScreen = () => {
-
     const navigation = useNavigation<MyPageStackNavigationProps>(); 
-
-
     return (
         <View style={styles.container}>
 
-            {/* 커스텀 헤더 (헤더a) */}
+            {/* 커스텀 헤더 */}
             <View style={styles.customHeader}>
                 <TouchableOpacity onPress={() => navigation.goBack()}>
                     <Ionicons name="chevron-back" size={24} color="black" />
@@ -126,9 +121,6 @@ const MyPageScreen = () => {
         </View>
     );
 };
-
-
-
 
 const styles = StyleSheet.create({
     container: {
@@ -225,7 +217,7 @@ const styles = StyleSheet.create({
     logoutText: {
         fontSize: 16,
         color: "red",
-    },
+    }
 });
 
 

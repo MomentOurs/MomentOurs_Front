@@ -1,11 +1,10 @@
 import React from "react";
 import { View, Text } from "react-native";
+import MemoriesHistoryContainer from "../../../../src/screens/home/sub-container/mypage/memorieshistory/memories-history-container";
 
 const MemoriesHistoryScreen = () => {
     return (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <Text>추억조회화면</Text>
-        </View>
+        <MemoriesHistoryContainer/>
     );
 };
 
