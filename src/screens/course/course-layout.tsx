@@ -46,7 +46,9 @@ const CourseLayout = ({ children }: { children: React.ReactNode }) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 16,
+        paddingLeft: 16,
+        paddingRight: 16,
+        paddingTop: 16,
         backgroundColor: '#FAFAFA',
     },
     tabContainer: {

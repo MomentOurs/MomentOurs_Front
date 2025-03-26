@@ -4,6 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import CourseLayout from './course-layout';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { NAVER_CLIENT_ID, NAVER_CLIENT_SECRET } from '@env';
 
 type Location = {
@@ -24,9 +25,13 @@ const dummyLocations: Location[] = [
 const CourseLocationSearch = () => {
     const navigation = useNavigation();
     const [searchQuery, setSearchQuery] = useState('');
+    const [dbSuggestions, setDbSuggestions] = useState<Location[]>([]);
+    const [naverResults, setNaverResults] = useState<Location[]>([]);
     const [filteredLocations, setFilteredLocations] = useState<Location[]>([]);
     const [recentSearches, setRecentSearches] = useState<Location[]>([]);
     const [searchCache, setSearchCache] = useState<{ [key: string]: Location[] }>({});
+    const [loading, setLoading] = useState(false);
+    const [recommendedLocations, setRecommendedLocations] = useState<Location[]>(dummyLocations);
 
     useEffect(() => {
         loadRecentSearches();
@@ -34,23 +39,28 @@ const CourseLocationSearch = () => {
 
     const loadRecentSearches = async () => {
         try {
-            const storedData = await AsyncStorage.getItem('recentSearches');
-            if (storedData) {
-                setRecentSearches(JSON.parse(storedData));
-            }
-        } catch (error) {
-            console.error('Failed to load recent searches:', error);
+            const data = await AsyncStorage.getItem('recentSearches');
+            if (data) setRecentSearches(JSON.parse(data));
+        } catch (err) {
+            console.error('최근 검색 불러오기 실패:', err);
         }
     };
 
     const saveRecentSearch = async (location: Location) => {
         try {
-            const updatedRecentSearches = [location, ...recentSearches.filter(item => item.locationName !== location.locationName)];
-            setRecentSearches(updatedRecentSearches.slice(0, 5));
-            await AsyncStorage.setItem('recentSearches', JSON.stringify(updatedRecentSearches.slice(0, 5)));
-        } catch (error) {
-            console.error('Failed to save recent search:', error);
+            const updated = [location, ...recentSearches.filter(l => l.locationName !== location.locationName)];
+            const sliced = updated.slice(0, 5);
+            setRecentSearches(sliced);
+            await AsyncStorage.setItem('recentSearches', JSON.stringify(sliced));
+        } catch (err) {
+            console.error('최근 검색 저장 실패:', err);
         }
+    };
+
+    const removeRecentSearch = async (locationName: string) => {
+        const updated = recentSearches.filter(l => l.locationName !== locationName);
+        setRecentSearches(updated);
+        await AsyncStorage.setItem('recentSearches', JSON.stringify(updated));
     };
 
     const fetchNaverPlaces = async (query: string) => {
@@ -90,6 +100,21 @@ const CourseLocationSearch = () => {
         );
 
         setFilteredLocations(filtered);
+    };
+
+    const highlightMatch = (text: string, keyword: string): React.ReactNode[] => {
+        if (!keyword) return [text];
+          
+        const regex = new RegExp(`(${keyword})`, 'gi');
+        const parts = text.split(regex);
+          
+        return parts.map((part, index) =>
+            part.toLowerCase() === keyword.toLowerCase() ? (
+                <Text key={index} style={styles.highlightText}>{part}</Text>
+            ) : (
+                <Text key={index}>{part}</Text>
+            )
+        );
     };
 
     const handleSearchConfirm = async () => {
@@ -173,32 +198,104 @@ const CourseLocationSearch = () => {
                 </TouchableOpacity>
             </View>
 
-            <FlatList
-                data={filteredLocations}
-                keyExtractor={(item) => item.locationName}
-                renderItem={({ item }) => (
+            {searchQuery.length > 0 ? (
+                <FlatList
+                    data={filteredLocations}
+                    keyExtractor={(item) => item.locationName}
+                    renderItem={({ item }) => (
                     <TouchableOpacity style={styles.resultItem} onPress={() => saveRecentSearch(item)}>
                         <View style={styles.resultTextContainer}>
-                            <Text style={styles.resultTitle}>{item.locationName}</Text>
-                            <Text style={styles.resultDescription}>{item.address}</Text>
+                        <Text style={styles.resultTitle}>{highlightMatch(item.locationName, searchQuery)}</Text>
+                        <Text style={styles.resultDescription}>{highlightMatch(item.address, searchQuery)}</Text>
                         </View>
                     </TouchableOpacity>
-                )}
-            />
+                    )}
+                />
+            ) : (
+                <>
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionTitle}>추천 장소</Text>
+                    {recommendedLocations.map((item, index) => (
+                        <View key={index} style={styles.recommendItem}>
+                            <View style={styles.resultTextContainer}>
+                                <Text style={styles.resultTitle}>{item.locationName}</Text>
+                                <Text style={styles.resultDescription}>{item.address}</Text>
+                            </View>
+                            <TouchableOpacity
+                                style={styles.selectButton}
+                                onPress={() => {
+                                    saveRecentSearch(item);
+                                    navigation.goBack();
+                                }}
+                            >
+                                <Text style={styles.selectButtonText}>선택</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ))}
+                </View>
+
+                <View style={styles.sectionContainer}>
+                    <Text style={styles.sectionTitle}>최근 검색 장소</Text>
+                    {recentSearches.map((item, index) => (
+                        <View key={index} style={styles.recommendItem}>
+                            <View style={styles.resultTextContainer}>
+                                <Text style={styles.resultTitle}>{item.locationName}</Text>
+                                <Text style={styles.resultDescription}>{item.address}</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <TouchableOpacity
+                                    style={styles.selectButton}
+                                    onPress={() => {
+                                        saveRecentSearch(item);
+                                        navigation.goBack();
+                                    }}
+                                >
+                                    <Text style={styles.selectButtonText}>선택</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => removeRecentSearch(item.locationName)} style={{ marginLeft: 8 }}>
+                                    <MaterialIcons name="close" size={18} color="#ccc" />
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    ))}
+                </View>
+                </>
+            )}
         </CourseLayout>
     );
 };
 
 const styles = StyleSheet.create({
     searchContainer: { flexDirection: 'row', alignItems: 'center', padding: 8 },
-    searchInput: { flex: 1, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6 },
+    searchInput: { flex: 1, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6, backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#ddd' },
     searchIcon: { marginLeft: 8 },
     resultItem: { flexDirection: 'row', alignItems: 'center', padding: 8 },
     resultTextContainer: { flex: 1 },
-    resultTitle: { fontSize: 14, fontWeight: 'bold' },
+    resultTitle: { fontSize: 14, fontWeight: 'bold', marginBottom: 5, },
     resultDescription: { fontSize: 12, color: '#777' },
-    selectButton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 5 },
+    selectButton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 5, backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#ddd' },
     selectButtonText: { fontSize: 12, color: '#999' },
+    sectionContainer: {
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+      },
+      sectionTitle: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#444',
+      },
+      recommendItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderBottomColor: '#eee',
+        borderBottomWidth: 1,
+      },
+      highlightText: {
+        color: '#FF6F61',
+        fontWeight: 'bold',
+      },      
 });
 
 export default CourseLocationSearch;

@@ -15,7 +15,7 @@ export default function App() {
     async function prepare() {
       try {
         await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 후에 로딩 완료
-        // setIsLoggedIn(true);  // 이 부분 주석 처리 해제하면 2초 뒤에 메인 하면으로 전환
+        setIsLoggedIn(true);  // 이 부분 주석 처리 해제하면 2초 뒤에 메인 하면으로 전환
       } catch (e) {
         console.warn(e);
       } finally {

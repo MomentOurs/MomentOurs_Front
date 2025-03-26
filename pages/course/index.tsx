@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Modal, TextInput } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { RouteProp, useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from '../../src/screens/course/course-navigation';
 import CourseLayout from '../../src/screens/course/course-layout';
@@ -14,9 +14,13 @@ type Folder = {
     image?: string;
 };
 
+type CourseScreenProps = {
+    route: RouteProp<CourseStackParamList, 'CourseScreen'>;
+};
+
 const tabs = ['데이트 코스', '내 코스', '즐겨찾기'];
 
-const CourseScreen = ({ route }) => {
+const CourseScreen: React.FC<CourseScreenProps> = ({ route }) => {
     const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
 
     const [folders, setFolders] = useState<Folder[]>([]);
@@ -39,14 +43,14 @@ const CourseScreen = ({ route }) => {
                     title: '경주 관광지/To do', 
                     description: '경주여행 관광 리스트', 
                     courseCount: 3, 
-                    image: require('../../assets/image (1).png') 
+                    // image: require('../../assets/image (1).png') 
                 },
                 { 
                     id: '2', 
                     title: '맛집 리스트', 
                     description: '가고 싶은 맛집, 카페', 
                     courseCount: 5, 
-                    image: require('../../assets/image (2).png') 
+                    // image: require('../../assets/image (2).png') 
                 },
             ]);
             setLoading(false);
@@ -120,14 +124,10 @@ const CourseScreen = ({ route }) => {
         setIsDeleteMode(false);
     };
 
-    const openModal = (type: 'rename' | 'description' | 'delete', folder: Folder) => {
-        if (type === 'rename') {
-            setModalData({ folderName: folder.title, text: folder.title }); // 🛠 폴더명을 초기 값으로 설정
-        } else {
-            setModalData({ folderName: folder.title, text: folder.description }); // 기존 설명 유지
-        }
+    const openModal = (type: 'rename' | 'description', folder: Folder) => {
+        setModalData({ folderName: folder.title, text: type === 'rename' ? folder.title : folder.description });
         setActiveModal(type);
-    };    
+    };
 
     if (loading) {
         return (
@@ -192,8 +192,16 @@ const CourseScreen = ({ route }) => {
                             }
                         >
                             {(isDeleteMode || isEditMode) && (
-                                <View style={[styles.courseCheckbox, selectedFolders.includes(item.id) && styles.courseCheckboxSelected]} />
+                                <TouchableOpacity
+                                    onPress={() => toggleSelectFolder(item.id)}
+                                    style={styles.checkboxWrapper}
+                                >
+                                    <View style={styles.checkbox}>
+                                    {selectedFolders.includes(item.id) && <View style={styles.checkboxSelected} />}
+                                    </View>
+                                </TouchableOpacity>
                             )}
+
                             {item.image && (
                                 <Image 
                                     source={typeof item.image === 'string' ? { uri: item.image } : item.image} 
@@ -209,7 +217,34 @@ const CourseScreen = ({ route }) => {
                     )}
                 />
             )}
-    
+
+            {!isDeleteMode && !isEditMode && (
+                <View style={styles.courseBottomContainer}>
+                    <TouchableOpacity 
+                        style={styles.createCourseButton} 
+                        onPress={() => navigation.navigate('CourseCreate')}>
+                        <Text style={styles.createCourseButtonText}>+ 코스 만들기</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
+            {isDeleteMode && selectedFolders.length > 0 && (
+                <TouchableOpacity style={styles.confirmButton} onPress={() => setActiveModal('delete')}>
+                    <Text style={styles.confirmButtonText}>삭제하기</Text>
+                </TouchableOpacity>
+            )}
+
+            {isEditMode && selectedFolders.length === 1 && (
+                <View style={styles.editActionsContainer}>
+                    <TouchableOpacity style={styles.editActionButton} onPress={() => openModal('rename', folders.find(f => f.id === selectedFolders[0])!)}>
+                        <Text style={styles.editActionText}>폴더명 수정</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.editActionButton} onPress={() => openModal('description', folders.find(f => f.id === selectedFolders[0])!)}>
+                        <Text style={styles.editActionText}>설명 수정</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
+
             <RenameFolderModal 
                 visible={activeModal === 'rename'}
                 folderName={modalData.folderName}
@@ -303,25 +338,6 @@ const styles = StyleSheet.create({
         borderBottomColor: '#ddd',
         paddingBottom: 8,
     },
-    courseTabItem: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 8,
-    },
-    courseActiveTab: {
-        borderBottomWidth: 2,
-        borderBottomColor: '#FF6F61',
-    },
-    courseTabText: {
-        fontSize: 16,
-        color: '#888',
-        textAlign: 'center',
-    },
-    courseActiveTabText: {
-        color: '#000',
-        fontWeight: 'bold',
-    },
     courseEmptyMessageContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -364,43 +380,70 @@ const styles = StyleSheet.create({
         color: '#999',
     },
     courseBottomContainer: {
-        marginTop: 'auto',
-        alignItems: 'flex-end',
-        paddingVertical: 10,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 15,
     },
-    
+    createCourseButtonContainer: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+    },
     createCourseButton: {
         backgroundColor: '#FF6F61',
-        paddingVertical: 10,
-        paddingHorizontal: 12,
-        borderRadius: 15,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 20,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 5,
+        elevation: 3,
     },
-    
     createCourseButtonText: {
-        color: '#fff',
+        color: '#FFF',
         fontSize: 16,
         fontWeight: 'bold',
     },
-    createCourseButtonPressed: {
-        backgroundColor: '#E85C50',
+    checkboxWrapper: {
+        width: 32,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 10,
     },
-
-    buttonPressed: {
-        backgroundColor: '#F0F0F0',
-    },
-    courseCheckbox: {
+    checkbox: {
         width: 20,
         height: 20,
         borderRadius: 10,
         borderWidth: 2,
         borderColor: '#888',
-        marginRight: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    courseCheckboxSelected: {
+    checkboxSelected: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
         backgroundColor: '#FF6F61',
-        borderColor: '#FF6F61',
     },
-
+      
+    confirmButton: {
+        backgroundColor: '#FF6F61',
+        paddingVertical: 12,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginTop: 10,
+        marginHorizontal: 16,
+        marginBottom: 16,
+    },
+      
+    confirmButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
     editActionsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
@@ -414,81 +457,12 @@ const styles = StyleSheet.create({
         marginHorizontal: 10,
         backgroundColor: '#FF6F61',
         borderRadius: 10,
+        marginBottom: 12,
     },
     editActionText: {
         color: '#FFF',
         fontSize: 16,
         fontWeight: 'bold',
-    },
-
-    deleteConfirmButton: {
-        backgroundColor: '#FF6F61',
-        paddingVertical: 12,
-        alignItems: 'center',
-        marginTop: 10,
-        borderRadius: 10,
-    },
-    deleteConfirmText: {
-        color: '#FFF',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    deleteModalContainer: {
-        backgroundColor: '#fff',
-        padding: 20,
-        borderRadius: 10,
-        width: '80%',
-        alignItems: 'center',
-    },
-    deleteModalText: {
-        fontSize: 16,
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    modalButtonContainer: {
-        flexDirection: 'row',
-    },
-    modalCancelButton: {
-        padding: 10,
-        marginRight: 10,
-    },
-    modalCancelText: {
-        color: '#888',
-    },
-    modalConfirmButton: {
-        padding: 10,
-        backgroundColor: '#FF6F61',
-        borderRadius: 5,
-    },
-    modalConfirmText: {
-        color: '#FFF',
-    },
-    editModalContainer: {
-        backgroundColor: '#FFFFFF',
-        padding: 20,
-        borderRadius: 10,
-        width: '85%',
-        alignItems: 'center',
-    },
-    editModalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    editModalInput: {
-        width: '100%',
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 5,
-        padding: 10,
-        fontSize: 16,
-        marginBottom: 15,
     },
 });
 

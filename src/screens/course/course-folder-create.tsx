@@ -23,7 +23,7 @@ const CourseFolderCreate = () => {
         setTimeout(() => {
             console.log('폴더 저장:', { folderTitle, folderDescription });
     
-            navigation.navigate('CourseHome', { refresh: true });
+            navigation.navigate('CourseScreen', { refresh: true });
         }, 1000);
     };
 
