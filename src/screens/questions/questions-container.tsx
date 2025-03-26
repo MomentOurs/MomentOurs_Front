@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
     View,
     Text,
@@ -36,6 +36,51 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const [showDeleteMessage, setShowDeleteMessage] = useState<boolean>(false);
 
+    const fetchQuestionAndAnswers = useCallback(async () => {
+        try {
+            const questionData = await getRandomQuestion();
+            if (questionData.success && questionData.data) {
+                setQuestionId(questionData.data.coupleQuesNo);
+                setQuestionText(questionData.data.randomQuestion.quesContent);
+                setUserQuesId(questionData.data.userQuesId);
+    
+                const answerData = await getQuestionAnswers(questionData.data.userQuesId);
+                if (answerData.success && answerData.data) {
+                    setMyAnswer(answerData.data.myAnswer || "이곳을 눌러서 답변을 입력해 주세요.");
+                    setOtherAnswer(answerData.data.otherAnswer || "상대방이 아직 답변하지 않았어요.");
+                    setAnswerId(answerData.data.quesAnswerId);
+                }
+            }
+        } catch (error) {
+            console.error('❌ 질문 및 답변 불러오는 중 오류 발생:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    // 🔹 답변 삭제 함수 (서버에도 삭제 요청)
+    const handleDeleteAnswer = async () => {
+        if (!questionId) return;
+    
+        setIsDeleting(true);
+        try {
+            await deleteAnswer(questionId);
+    
+            // 👉 삭제 후 다시 데이터 새로 불러오기
+            await fetchQuestionAndAnswers();
+    
+            setShowDeleteMessage(true);
+            setTimeout(() => {
+                setShowDeleteMessage(false);
+            }, 1000);
+        } catch (error) {
+            console.error("❌ 답변 삭제 중 오류 발생:", error);
+        } finally {
+            setIsDeleting(false);
+            setModalVisible(false);
+        }
+    };
+
     useEffect(() => {
         const today = new Date();
         const formattedDate = today.toLocaleDateString('ko-KR', {
@@ -68,29 +113,7 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
         };
 
         fetchQuestionAndAnswers();
-    }, []);
-
-    // 🔹 답변 삭제 함수 (서버에도 삭제 요청)
-    const handleDeleteAnswer = async () => {
-        if (!questionId) return; // 🔹 questionId가 없으면 실행하지 않음
-
-        setIsDeleting(true); // 🔹 삭제 요청 중 상태
-        try {
-            await deleteAnswer(questionId);
-            setMyAnswer("");
-
-            setShowDeleteMessage(true);
-
-            setTimeout(() => {
-                setShowDeleteMessage(false);
-            }, 1000);
-        } catch (error) {
-            console.error("❌ 답변 삭제 중 오류 발생:", error);
-        } finally {
-            setIsDeleting(false); // 🔹 삭제 요청 끝나면 복구
-            setModalVisible(false); // ✅ 모달 닫기
-        }
-    };
+    }, []);    
 
     return (
         <View style={styles.container}>
