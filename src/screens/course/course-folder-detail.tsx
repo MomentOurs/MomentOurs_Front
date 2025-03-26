@@ -4,7 +4,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import CourseLayout from './course-layout';
-
+import DeleteFolderModal from '../../components/modals/course/DeleteFolderModal';
+import CourseDeleteConfirmModal from '../../components/modals/course/CourseDeleteConfirmModal';
 
 type Course = {
     courseId: number;
@@ -111,9 +112,11 @@ const CourseFolderDetail = () => {
                         }}
                     >
                         {isDeleteMode && (
-                            <View style={styles.courseCheckboxContainer}>
-                                <View style={[styles.courseCheckbox, selectedCourses.includes(item.courseId) && styles.courseCheckboxSelected]} />
-                            </View>
+                            <View style={styles.checkboxWrapper}>
+                                <View style={styles.checkbox}>
+                                    {selectedCourses.includes(item.courseId) && <View style={styles.checkboxSelected} />}
+                                </View>
+                            </View>                          
                         )}
                         <View style={styles.courseTextContainer}>
                             <Text style={styles.courseTitle}>{item.courseTitle}</Text>
@@ -126,31 +129,23 @@ const CourseFolderDetail = () => {
             />
 
             {isDeleteMode && selectedCourses.length > 0 && (
-                <TouchableOpacity style={styles.deleteConfirmButton} onPress={() => setShowDeleteModal(true)}>
-                    <Text style={styles.deleteConfirmText}>삭제하기</Text>
-                </TouchableOpacity>
+                <View style={styles.bottomButtons}>
+                    <TouchableOpacity style={styles.deleteConfirmButton} onPress={() => setShowDeleteModal(true)}>
+                        <Text style={styles.registerButtonText}>삭제하기</Text>
+                    </TouchableOpacity>
+                </View>
             )}
 
-            <Modal visible={showDeleteModal} transparent={true} animationType="fade">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContainer}>
-                        <Text style={styles.modalText}>
-                            {selectedCourses.length > 1 ? 
-                                `${selectedCourses.length}개의 일정을 정말 삭제하시겠습니까?` :
-                                `"${courses.find(c => c.courseId === selectedCourses[0])?.courseTitle}"\n일정을 정말 삭제하시겠습니까?`
-                            }
-                        </Text>
-                        <View style={styles.modalButtonContainer}>
-                            <TouchableOpacity style={styles.modalCancelButton} onPress={() => setShowDeleteModal(false)}>
-                                <Text style={styles.modalCancelText}>취소</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.modalConfirmButton} onPress={confirmDelete}>
-                                <Text style={styles.modalConfirmText}>삭제</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+            <CourseDeleteConfirmModal
+                visible={showDeleteModal}
+                courseName={
+                    selectedCourses.length > 1
+                        ? `${selectedCourses.length}개의 일정`
+                        : courses.find(c => c.courseId === selectedCourses[0])?.courseTitle ?? ''
+                }
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+            />
         </CourseLayout>
     );
 };
@@ -187,6 +182,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         borderWidth: 1,
         borderColor: '#E0E0E0',
+        marginLeft: 8,
         elevation: 3,
     },
     courseDeleteIcon: {
@@ -214,22 +210,26 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
         elevation: 2,
     },
-    courseCheckboxContainer: {
-        width: 30,
-        justifyContent: 'center',
+    checkboxWrapper: {
+        width: 32,
         alignItems: 'center',
-    },
-    courseCheckbox: {
+        justifyContent: 'center',
+      },
+      checkbox: {
         width: 20,
         height: 20,
         borderRadius: 10,
         borderWidth: 2,
         borderColor: '#888',
-    },
-    courseCheckboxSelected: {
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      checkboxSelected: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
         backgroundColor: '#FF6F61',
-        borderColor: '#FF6F61',
-    },
+      },
     courseTextContainer: {
         flex: 1,
         marginLeft: 5,
@@ -255,54 +255,22 @@ const styles = StyleSheet.create({
         color: '#FF6F61',
         backgroundColor: '#FFE0E0',
     },
-    deleteConfirmButton: {
+    bottomButtons: {
+        paddingHorizontal: 16,
+        paddingTop: 8,
+        paddingBottom: 16,
+      },
+      deleteConfirmButton: {
         backgroundColor: '#FF6F61',
         paddingVertical: 12,
-        alignItems: 'center',
-        marginTop: 10,
         borderRadius: 10,
-    },
-    deleteConfirmText: {
+        alignItems: 'center',
+      },
+      registerButtonText: {
         color: '#FFF',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
-    },
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    modalContainer: {
-        backgroundColor: '#fff',
-        padding: 20,
-        borderRadius: 10,
-        width: '80%',
-        alignItems: 'center',
-    },
-    modalText: {
-        fontSize: 16,
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    modalButtonContainer: {
-        flexDirection: 'row',
-    },
-    modalCancelButton: {
-        padding: 10,
-        marginRight: 10,
-    },
-    modalCancelText: {
-        color: '#888',
-    },
-    modalConfirmButton: {
-        padding: 10,
-        backgroundColor: '#FF6F61',
-        borderRadius: 5,
-    },
-    modalConfirmText: {
-        color: '#FFF',
-    },
+      },
 });
 
 export default CourseFolderDetail;

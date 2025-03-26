@@ -47,10 +47,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     modalTitle: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
         textAlign: 'center',
-        marginBottom: 10,
+        marginBottom: 20,
+        color: '#333',
     },
     modalInput: {
         width: '100%',
@@ -63,21 +64,29 @@ const styles = StyleSheet.create({
     },
     modalButtonContainer: {
         flexDirection: 'row',
+        justifyContent: 'center',
     },
     modalCancelButton: {
-        padding: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
         marginRight: 10,
+        backgroundColor: '#f2f2f2',
+        borderRadius: 5,
     },
     modalCancelText: {
-        color: '#888',
+        color: '#666',
+        fontSize: 14,
     },
     modalConfirmButton: {
-        padding: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
         backgroundColor: '#FF6F61',
         borderRadius: 5,
     },
     modalConfirmText: {
         color: '#FFF',
+        fontSize: 14,
+        fontWeight: 'bold',
     },
 });
 

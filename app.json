@@ -13,13 +13,15 @@
       "backgroundColor": "#FF8A8A"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "beyond.momentours"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "beyond.momentours"
     },
     "web": {
       "favicon": "./assets/favicon.png"

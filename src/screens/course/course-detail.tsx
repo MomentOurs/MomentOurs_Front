@@ -5,6 +5,7 @@ import { NaverMapView, NaverMapMarkerOverlay } from '@mj-studio/react-native-nav
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import CourseLayout from './course-layout';
+import CourseDeleteConfirmModal from '../../components/modals/course/CourseDeleteConfirmModal';
 import { NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, NAVER_BASE_URL } from '@env';
 
 type DateCourseLocation = {
@@ -176,7 +177,7 @@ const CourseDetail = () => {
                                 height={40}
                             />
                         ))}
-                    </NaverMapView>             
+                    </NaverMapView>
                 )}
             </Animated.View>
 
@@ -184,26 +185,49 @@ const CourseDetail = () => {
                 data={locations}
                 keyExtractor={(item) => item.courseLocationId.toString()}
                 renderItem={({ item }) => (
-                    <TouchableOpacity 
+                    <TouchableOpacity
                         style={styles.locationItem}
                         onPress={() => isDeleteMode ? toggleSelectLocation(item.courseLocationId) : null}
                     >
-                        {isDeleteMode && (
-                            <View style={styles.checkbox}>
-                                {selectedLocations.includes(item.courseLocationId) && <View style={styles.checkboxSelected} />}
+                        <View style={styles.locationRow}>
+                            {isDeleteMode && (
+                                <TouchableOpacity onPress={() => toggleSelectLocation(item.courseLocationId)} style={styles.checkboxWrapper}>
+                                <View style={styles.checkbox}>
+                                    {selectedLocations.includes(item.courseLocationId) && <View style={styles.checkboxSelected} />}
+                                </View>
+                                </TouchableOpacity>
+                            )}
+
+                            <View style={styles.locationTextContainer}>
+                                <Text style={styles.locationName}>{item.locationName}</Text>
+                                <Text style={styles.locationAddress}>{item.address}</Text>
+                                {item.courseMemo && <Text style={styles.courseMemo}>{item.courseMemo}</Text>}
                             </View>
-                        )}
-                        <View style={styles.locationTextContainer}>
-                            <Text style={styles.locationName}>{item.locationName}</Text>
-                            <Text style={styles.locationAddress}>{item.address}</Text>
-                            {item.courseMemo && <Text style={styles.courseMemo}>{item.courseMemo}</Text>}
+
+                            {!isDeleteMode && (
+                                <TouchableOpacity style={styles.memoryButton} onPress={() => console.log(`${item.locationName} 추억 보기`)}>
+                                <Text style={styles.memoryButtonText}>추억 보기</Text>
+                                </TouchableOpacity>
+                            )}
                         </View>
                     </TouchableOpacity>
                 )}
             />
                 
-            {!isMapVisible && (
-                <View style={styles.bottomButtons}>
+            {isDeleteMode ? (
+                selectedLocations.length > 0 && (
+                    <View style={styles.bottomButtons}>
+                    <TouchableOpacity 
+                        style={styles.deleteConfirmButton}
+                        onPress={() => setShowDeleteModal(true)}
+                    >
+                        <Text style={styles.registerButtonText}>삭제하기</Text>
+                    </TouchableOpacity>
+                    </View>
+                )
+                ) : (
+                !isMapVisible && (
+                    <View style={styles.bottomButtons}>
                     <TouchableOpacity 
                         style={styles.addButton}
                         onPress={() => navigation.navigate('CourseLocationSearch')}
@@ -217,37 +241,50 @@ const CourseDetail = () => {
                     >
                         <Text style={styles.registerButtonText}>일정 등록</Text>
                     </TouchableOpacity>
-                </View>
-            )}
+                    </View>
+                )
+                )}
+
+            <CourseDeleteConfirmModal
+                visible={showDeleteModal}
+                selectedCount={selectedLocations.length}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+            />
         </CourseLayout>
     );
 };
 
 const styles = StyleSheet.create({
     centeredContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-    courseHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: 16 },
-    courseTitle: { fontSize: 16, fontWeight: 'bold', color: '#FF6F61', marginRight: 10 },
+    courseHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 16, paddingLeft: 12, paddingRight: 12 },
+    courseTitle: { fontSize: 16, fontWeight: 'bold', color: '#FF6F61', marginRight: 20 },
     courseDate: { fontSize: 12, color: '#666' },
     deleteButton: {flexDirection: 'row',alignItems: 'center',backgroundColor: '#fff',paddingVertical: 8,paddingHorizontal: 8,borderRadius: 8, borderWidth: 1,borderColor: '#E0E0E0',elevation: 3,},
-    deleteIcon: { width: 13, height: 13, marginRight: 6, tintColor: '#888' },
+    deleteIcon: { width: 14, height: 14, marginRight: 6, tintColor: '#888' },
     deleteButtonText: { fontSize: 12, color: '#888' },
-    mapContainer: { width: '100%', height: 250,overflow: 'hidden', backgroundColor: 'white' },
-    mapButton: {backgroundColor: '#FF6F61',paddingVertical: 8, paddingHorizontal: 8, borderRadius: 8, alignSelf: 'center',},
+    mapContainer: { width: '100%', height: 250,overflow: 'hidden', backgroundColor: 'white', paddingTop: 10 },
+    mapButton: {backgroundColor: '#FF6F61',paddingVertical: 9.5, paddingHorizontal: 8, borderRadius: 8, alignSelf: 'center',},
     mapButtonText: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
-    closeMapButton: {backgroundColor: '#FF6F61',paddingVertical: 8, paddingHorizontal: 8, borderRadius: 8, alignSelf: 'center',},
+    closeMapButton: {backgroundColor: '#FF6F61',paddingVertical: 10, paddingHorizontal: 8, borderRadius: 8, alignSelf: 'center',},
     closeMapButtonText: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
     locationItem: { padding: 14, borderBottomWidth: 1, borderBottomColor: '#ddd' },
-    locationTextContainer: { marginLeft: 10 },
+    locationRow: {flexDirection: 'row',alignItems: 'center',},
+    locationTextContainer: { flex: 1, marginHorizontal: 10, },
     locationName: { fontSize: 16, fontWeight: 'bold' },
     locationAddress: { fontSize: 12, color: '#666' },
+    memoryButton: {backgroundColor: '#FFF0F0',borderRadius: 12,paddingVertical: 6,paddingHorizontal: 10,marginLeft: 10,},
+    memoryButtonText: {color: '#FF6F61',fontWeight: 'bold',fontSize: 12,},
     courseMemo: { fontSize: 12, color: '#888', fontStyle: 'italic' },
-    checkbox: {width: 20,height: 20,borderRadius: 10,borderWidth: 2,borderColor: '#888',},
-    checkboxSelected: {backgroundColor: '#FF6F61',borderColor: '#FF6F61', },
+    checkboxWrapper: {width: 32, alignItems: 'center', justifyContent: 'center',},
+    checkbox: {width: 20,height: 20,borderRadius: 10,borderWidth: 2,borderColor: '#888',justifyContent: 'center',alignItems: 'center',},
+    checkboxSelected: {width: 12,height: 12,borderRadius: 6,backgroundColor: '#FF6F61',borderColor: '#FF6F61', },
     bottomButtons: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16},
     addButton: {backgroundColor: '#FFF',borderColor: '#E0E0E0',borderWidth: 1,paddingVertical: 8,paddingHorizontal: 20,borderRadius: 10,flex: 1,marginRight: 8,alignItems: 'center'},
     addButtonText: { fontSize: 14, color: '#888' },
     registerButton: {backgroundColor: '#FF6F61',paddingVertical: 8,paddingHorizontal: 20,borderRadius: 10,flex: 1,alignItems: 'center',},
     registerButtonText: {color: '#FFF',fontSize: 14,fontWeight: 'bold',},
+    deleteConfirmButton: {backgroundColor: '#FF6F61',paddingVertical: 12,paddingHorizontal: 20,borderRadius: 10,flex: 1,alignItems: 'center',},
 });
 
 export default CourseDetail;
