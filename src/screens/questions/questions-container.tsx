@@ -16,7 +16,7 @@ import DeleteModal from '../../components/common/DeleteModal';
 type RootStackParamList = {
     Questions: undefined;
     QuestionsRegister: { questionId: number; questionText: string; currentDate: string; userQuesId: number; };
-    QuestionComment: undefined;
+    QuestionComment: { userQuesId: number; questionId: number; questionText: string };
     QuestionsUpdate: { questionId: number; questionText: string; currentDate: string; quesAnswerId: number; myAnswer: string; };
 };
 type Props = {
@@ -198,7 +198,7 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                 onDelete={handleDeleteAnswer} // ✅ 삭제 요청 함수 연결
             />
 
-            <TouchableOpacity style={styles.chatButton} onPress={() => navigation.navigate('QuestionComment')}>
+            <TouchableOpacity style={styles.chatButton} onPress={() => navigation.navigate('QuestionComment', { userQuesId, questionId, questionText })}>
                 <Ionicons name="chatbubble-ellipses-outline" size={28} color="white" />
             </TouchableOpacity>
         </View>

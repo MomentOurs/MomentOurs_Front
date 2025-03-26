@@ -39,7 +39,7 @@ const RandomQuestionsStack = () => {
                 component={QuestionsScreen}
             />
             <Stack.Screen name="QuestionsRegister" component={QuestionsRegisterScreen} />
-            <Stack.Screen name="QuestionComment" component={QuestionCommentScreen} />
+            <Stack.Screen name="QuestionComment" component={QuestionCommentScreen} options={{ headerShown: false }}/>
             <Stack.Screen name="QuestionsList" component={QuestionsListScreen} />
             <Stack.Screen name="QuestionsUpdate" component={QuestionsUpdateScreen} />
 

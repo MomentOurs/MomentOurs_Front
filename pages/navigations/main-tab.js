@@ -9,35 +9,11 @@ import MapScreen from '../map';
 
 const Tab = createBottomTabNavigator();
 
-// 🔹 랜덤질문 화면의 상단 아이콘
-const HeaderLeftIcon = ({ navigation }) => (
-    <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 15 }}>
-        <Ionicons name="chevron-back-outline" size={22} color="black" />
-    </TouchableOpacity>
-);
-
-const HeaderRightIcon = ({ navigation }) => (
-    <TouchableOpacity onPress={() => console.log('목록 버튼 클릭')} style={{ marginRight: 15 }}>
-        <Ionicons name="menu-outline" size={22} color="black" />
-    </TouchableOpacity>
-);
-
 // 🔹 탭 네비게이터 (하단 바)
 const MainTabsNavigator = () => {
     return (
         <Tab.Navigator initialRouteName="Home">
-            <Tab.Screen 
-                name="랜덤질문" 
-                component={QuestionsScreen}
-                options={({ navigation }) => ({
-                    headerTitle: '랜덤질문',
-                    headerTitleAlign: 'center',
-                    headerStyle: { backgroundColor: 'white' },
-                    headerTitleStyle: { fontSize: 18, fontWeight: 'bold', color: 'black' },
-                    headerLeft: () => <HeaderLeftIcon navigation={navigation} />,
-                    headerRight: () => <HeaderRightIcon navigation={navigation} />,
-                })}
-            />
+            <Tab.Screen name="랜덤질문" component={QuestionsScreen} options={{ headerShown: false }}/>
             <Tab.Screen name="Map" component={MapScreen} />
             <Tab.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="Clendar" component={ClendarScreen} />

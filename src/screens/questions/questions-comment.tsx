@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
@@ -6,58 +7,86 @@ import {
     TouchableOpacity,
     FlatList,
     StyleSheet,
-    Image
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { getQuestionComment } from "../../api/index"; // 🔹 실제 경로로 수정
+import { useRoute } from "@react-navigation/native";
 
-const QuestionCommentScreen = () => {
-    const [messages, setMessages] = useState([
-        { id: "1", text: "ㅎㅎ 오빠 답변 보니까, 우리 처음 여행 갔을 때 생각난다! 그때 어디였지?", sender: "other", time: "15분전" },
-        { id: "2", text: "여수였나?", sender: "me", time: "15분전" },
-        { id: "3", text: "응응ㅎㅎㅎ", sender: "other", time: "15분전" },
-        { id: "4", text: "여수 밤바다~", sender: "other", time: "14분전" },
-        { id: "5", text: "헷", sender: "me", time: "15분전" },
-        { id: "6", text: "또 가고싶다!", sender: "me", time: "15분전" },
-        { id: "7", text: "올해에 한 번 갈까? 또 기차타고 여행하고 싶어!", sender: "other", time: "13분전" },
-        { id: "8", text: "헉 너무 좋아!!! 당장 기차 예매하자! 두근두근두근!", sender: "me", time: "15분전" },
-        { id: "9", text: "ㅎㅎ 좋아~ 내가 예매할게~~ 숙소는 호텔? 아님 풀빌라?", sender: "other", time: "13분전" },
-        { id: "10", text: "움,,, 풀빌라 가자! ❤️❤️❤️❤️❤️", sender: "me", time: "15분전" },
-    ]);
-
+const QuestionCommentScreen = ({ navigation }: any) => {
+    const [messages, setMessages] = useState<any[]>([]);
     const [inputText, setInputText] = useState("");
+
+    const route = useRoute();
+    const { userQuesId, questionId, questionText } = route.params as any;
+
+    const myMemberId = 2; // 로그인 유저 ID
+
+    const formatTime = (isoString: string) => {
+        const date = new Date(isoString);
+    
+        const hours = date.getHours();
+        const minutes = date.getMinutes().toString().padStart(2, "0");
+    
+        const ampm = hours >= 12 ? "오후" : "오전";
+        const displayHour = hours % 12 === 0 ? 12 : hours % 12;
+    
+        return `${ampm} ${displayHour}:${minutes}`;
+    };
+
+    useEffect(() => {
+        const fetchComments = async () => {
+            try {
+                const comments = await getQuestionComment(userQuesId);
+                const mapped = comments.map((comment: any) => ({
+                    id: String(comment.commentId),
+                    text: comment.commentContent,
+                    sender: comment.memberId === myMemberId ? "me" : "other",
+                    time: formatTime(comment.createdAt),
+                }));
+                setMessages(mapped.reverse());
+            } catch (err) {
+                console.error("댓글 로딩 실패", err);
+            }
+        };
+        fetchComments();
+    }, [userQuesId]);
 
     const renderMessage = ({ item }: { item: any }) => (
         <View style={[
             styles.messageContainer,
             item.sender === "me" ? styles.myMessageContainer : styles.otherMessageContainer
         ]}>
-            <Text style={[
-                styles.messageText,
-                item.sender === "me" ? styles.myMessageText : styles.otherMessageText
-            ]}>
-                {item.text}
-            </Text>
+            <Text style={styles.messageText}>{item.text}</Text>
             <Text style={styles.timestamp}>{item.time}</Text>
         </View>
     );
 
     return (
         <View style={styles.container}>
+            {/* ✅ 상단 커스텀 헤더 */}
+            <SafeAreaView style={{ backgroundColor: '#fff' }}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                        <Ionicons name="chevron-back" size={26} color="black" />
+                    </TouchableOpacity>
+                    <View style={styles.headerCenter}>
+                        <Text style={styles.questionNumber}>#{questionId}</Text>
+                    </View>
+                    <TouchableOpacity>
+                        <Ionicons name="search" size={22} color="#000" />
+                    </TouchableOpacity>
+                </View>
+            </SafeAreaView>
 
-            {/* 질문 영역 */}
-            <View style={styles.questionContainer}>
-                <Text style={styles.questionText}>
-                    사랑하는 연인과 가장 행복했던 시간은 언제인가요?
-                </Text>
-            </View>
+            <Text style={styles.headerQuestion}>{questionText}</Text>
 
-            {/* 채팅 리스트 */}
+            {/* 채팅 내용 */}
             <FlatList
                 data={messages}
                 keyExtractor={(item) => item.id}
                 renderItem={renderMessage}
                 contentContainerStyle={styles.chatContainer}
-                inverted // 최신 메시지가 아래로 가도록 설정
+                inverted
             />
 
             {/* 입력창 */}
@@ -88,11 +117,26 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
-        paddingHorizontal: 20,
-        paddingVertical: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: "#EAEAEA",
+        paddingHorizontal: 15,
+        paddingBottom: 10,
+        backgroundColor: "#fff",
     },
+    headerCenter: {
+        flex: 1,
+        marginHorizontal: 10,
+        alignItems: "center",
+    },
+    questionNumber: {
+        fontSize: 18,
+        fontWeight: "bold",
+        color: "#FF6B81",
+    },
+    headerQuestion: {
+        fontSize: 14,
+        color: "#333",
+        textAlign: "center",
+    },
+
     headerTitle: {
         fontSize: 18,
         fontWeight: "bold",
