@@ -4,16 +4,18 @@
   import SignUpScreen2 from './signupScreen2';
   import SignUpScreen3 from './signupScreen3';
   import VerifyEmailScreen from './verifyEmailScreen';
+  import { SignUpStackParamList } from '../../components/types/signup/signuptypes'; 
 
   // Stack Navigator의 타입 정의
-  type StackParamList = {
-    SignUp1: { email: string };
-    SignUp2: { email: string };
-    SignUp3: { email: string };
-    VerifyEmail: { email: string };
-  };
+  // type StackParamList = {
+  //   SignUp1: { email: string };
+  //   SignUp2: { email: string };
+  //   SignUp3: { email: string };
+  //   VerifyEmail: { email: string };
+  // };
 
-  const Stack = createStackNavigator<StackParamList>();
+  const Stack = createStackNavigator<SignUpStackParamList>(); 
+  // const Stack = createStackNavigator<StackParamList>();
 
   const SignUpContainer: React.FC = () => {
     return (
