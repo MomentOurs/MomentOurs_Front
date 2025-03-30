@@ -4,12 +4,15 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from "@expo/vector-icons"; 
+import ResetPasswordNavigator from './resetPassword-navigator';
 import axios,  { AxiosError } from 'axios';
 
 // Stack Navigator 타입 정의
 type RootStackParamList = {
   Login: undefined;
   SignUpContainer: undefined;
+//   FindPasswordScreen: undefined;
+ResetPasswordNavigator: undefined;
 };
 
 // useNavigation의 타입 정의
@@ -54,6 +57,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ setIsLoggedIn }) => {
 
             await AsyncStorage.setItem('accessToken', accessToken); // JWT 저장
             await AsyncStorage.setItem('refreshToken', refreshToken);
+
+             // 자동로그인 추가
+            if (isRemembered) {
+                await AsyncStorage.setItem('isLoggedIn', 'true');
+            } else {
+                await AsyncStorage.removeItem('isLoggedIn');
+            }
+  
             setIsLoggedIn(true); // 로그인 상태 변경
     
         } catch (error: unknown) { // unknown 타입을 처리
@@ -110,13 +121,18 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ setIsLoggedIn }) => {
                     <Text style={styles.linkText}>회원가입</Text>
                 </TouchableOpacity>
                 <Text style={styles.separator}> | </Text>
-                <TouchableOpacity onPress={() => alert('아이디 찾기 페이지 이동')}>
+                {/* <TouchableOpacity onPress={() => alert('아이디 찾기 페이지 이동')}>
                     <Text style={styles.linkText}>아이디찾기</Text>
-                </TouchableOpacity>
-                <Text style={styles.separator}> | </Text>
-                <TouchableOpacity onPress={() => alert('비밀번호 찾기 페이지 이동')}>
+                </TouchableOpacity> */}
+                {/* <Text style={styles.separator}> | </Text> */}
+                {/* <TouchableOpacity onPress={() => alert('비밀번호 찾기 페이지 이동')}> */}
+                {/* <TouchableOpacity onPress={() => navigation.navigate('FindPasswordScreen')}>
                     <Text style={styles.linkText}>비밀번호찾기</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
+                
+                <TouchableOpacity onPress={() => navigation.navigate('ResetPasswordNavigator')}>
+  <Text style={styles.linkText}>비밀번호 찾기</Text>
+</TouchableOpacity>
             </View>
             <View style={styles.dividerContainer}>
                 <View style={styles.line} />

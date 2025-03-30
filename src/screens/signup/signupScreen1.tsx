@@ -133,14 +133,6 @@ const handleConfirmPasswordChange = (text: string) => {
 
         <Text style={styles.label}>비밀번호 확인</Text>
         <View style={styles.inputRow}>  
-          {/* <TextInput 
-            style={styles.input} 
-            placeholder="8~16자의 영문, 숫자, 특수기호" 
-            secureTextEntry 
-            placeholderTextColor="#aaa" 
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-          /> */}
           <TextInput 
             style={styles.input} 
             placeholder="8~16자의 영문, 숫자, 특수기호" 

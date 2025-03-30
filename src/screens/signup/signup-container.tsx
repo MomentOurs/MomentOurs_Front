@@ -3,6 +3,7 @@
   import SignUpScreen1 from './signupScreen1';
   import SignUpScreen2 from './signupScreen2';
   import SignUpScreen3 from './signupScreen3';
+  import FindPasswordScreen from '../login/findPasswordEmailScreen';
   import VerifyEmailScreen from './verifyEmailScreen';
   import { SignUpStackParamList } from '../../components/types/signup/signuptypes'; 
 
