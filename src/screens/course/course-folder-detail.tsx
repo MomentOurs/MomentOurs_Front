@@ -4,7 +4,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import CourseLayout from './course-layout';
-import DeleteFolderModal from '../../components/modals/course/DeleteFolderModal';
 import CourseDeleteConfirmModal from '../../components/modals/course/CourseDeleteConfirmModal';
 
 type Course = {
@@ -79,7 +78,10 @@ const CourseFolderDetail = () => {
     }
 
     return (
-        <CourseLayout>
+        <CourseLayout
+        selectedTab="내 코스"
+        onTabSelect={() => {}}
+        >
             <View style={styles.courseFolderHeader}>
                 <View>
                     <Text style={styles.courseFolderTitle}>{folderTitle}</Text>
@@ -160,11 +162,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 16,
+        padding: 8,
         borderBottomColor: '#ddd',
     },
     courseFolderTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#FF6F61',
     },
@@ -203,7 +205,7 @@ const styles = StyleSheet.create({
         padding: 14,
         borderRadius: 8,
         marginBottom: 10,
-        marginHorizontal: 16,
+        marginHorizontal: 8,
         shadowColor: '#000',
         shadowOpacity: 0.05,
         shadowOffset: { width: 0, height: 1 },
@@ -235,7 +237,7 @@ const styles = StyleSheet.create({
         marginLeft: 5,
     },
     courseTitle: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
     },
     courseType: {

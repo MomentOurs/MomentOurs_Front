@@ -5,7 +5,7 @@ import { NaverMapView, NaverMapMarkerOverlay } from '@mj-studio/react-native-nav
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import CourseLayout from './course-layout';
-import CourseDeleteConfirmModal from '../../components/modals/course/CourseDeleteConfirmModal';
+import CourseLocationDeleteModal from '../../components/modals/course/CourseLocationDeleteModal';
 import { NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, NAVER_BASE_URL } from '@env';
 
 type DateCourseLocation = {
@@ -138,7 +138,10 @@ const CourseDetail = () => {
     }
 
     return (
-        <CourseLayout>
+        <CourseLayout
+        selectedTab="내 코스"
+        onTabSelect={() => {}}
+        >
             <View style={styles.courseHeader}>
                 <View>
                     <Text style={styles.courseTitle}>{courseTitle}</Text>
@@ -228,24 +231,24 @@ const CourseDetail = () => {
                 ) : (
                 !isMapVisible && (
                     <View style={styles.bottomButtons}>
-                    <TouchableOpacity 
-                        style={styles.addButton}
-                        onPress={() => navigation.navigate('CourseLocationSearch')}
-                    >
-                        <Text style={styles.addButtonText}>장소 추가</Text>
-                    </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={styles.addButton}
+                            onPress={() => navigation.navigate('CourseLocationSearch')}
+                        >
+                            <Text style={styles.addButtonText}>장소 추가</Text>
+                        </TouchableOpacity>
 
-                    <TouchableOpacity 
-                        style={styles.registerButton}
-                        onPress={() => console.log('일정 등록')}
-                    >
-                        <Text style={styles.registerButtonText}>일정 등록</Text>
-                    </TouchableOpacity>
+                        <TouchableOpacity 
+                            style={styles.registerButton}
+                            onPress={() => console.log('일정 등록')}
+                        >
+                            <Text style={styles.registerButtonText}>일정 등록</Text>
+                        </TouchableOpacity>
                     </View>
                 )
                 )}
 
-            <CourseDeleteConfirmModal
+            <CourseLocationDeleteModal
                 visible={showDeleteModal}
                 selectedCount={selectedLocations.length}
                 onClose={() => setShowDeleteModal(false)}

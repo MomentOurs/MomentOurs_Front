@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Modal, TextInput } from 'react-native';
-import { RouteProp, useNavigation, useFocusEffect } from '@react-navigation/native';
+import { RouteProp, useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from '../../src/screens/course/course-navigation';
 import CourseLayout from '../../src/screens/course/course-layout';
 import { RenameFolderModal, RenameDescriptionModal, DeleteFolderModal } from '../../src/components/modals/course';
+import DateCourseTab from './datecourse-tab';
+import FavoriteCourseTab from './favorite-course-tab';
 
 type Folder = {
     id: string;
@@ -20,12 +22,15 @@ type CourseScreenProps = {
 
 const tabs = ['데이트 코스', '내 코스', '즐겨찾기'];
 
-const CourseScreen: React.FC<CourseScreenProps> = ({ route }) => {
+const CourseScreen = () => {
     const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
 
+    const route = useRoute<RouteProp<CourseStackParamList, 'CourseScreen'>>();
     const [folders, setFolders] = useState<Folder[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedTab, setSelectedTab] = useState('내 코스');
+    const [selectedTab, setSelectedTab] = useState<'내 코스' | '데이트 코스' | '즐겨찾기'>(
+        route.params?.initialTab ?? '내 코스'
+      );
     const [isEditMode, setIsEditMode] = useState(false);
     const [isDeleteMode, setIsDeleteMode] = useState(false);
     const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
@@ -36,25 +41,23 @@ const CourseScreen: React.FC<CourseScreenProps> = ({ route }) => {
         // 실제 API 호출 (주석 처리해둠, 필요 시 활성화)
         // fetchFolders();
 
-        setTimeout(() => {
-            setFolders([
-                { 
-                    id: '1', 
-                    title: '경주 관광지/To do', 
-                    description: '경주여행 관광 리스트', 
-                    courseCount: 3, 
-                    // image: require('../../assets/image (1).png') 
-                },
-                { 
-                    id: '2', 
-                    title: '맛집 리스트', 
-                    description: '가고 싶은 맛집, 카페', 
-                    courseCount: 5, 
-                    // image: require('../../assets/image (2).png') 
-                },
-            ]);
-            setLoading(false);
-        }, 1000);
+        setFolders([
+            { 
+                id: '1', 
+                title: '경주 관광지/To do', 
+                description: '경주여행 관광 리스트', 
+                courseCount: 3, 
+                image: require('../../assets/image (1).png') 
+            },
+            { 
+                id: '2', 
+                title: '맛집 리스트', 
+                description: '가고 싶은 맛집, 카페', 
+                courseCount: 5, 
+                image: require('../../assets/image (2).png') 
+            },
+        ]);
+        setLoading(false);
     }, []);
 
     // const fetchFolders = async () => {
@@ -138,103 +141,110 @@ const CourseScreen: React.FC<CourseScreenProps> = ({ route }) => {
     }
 
     return (
-        <CourseLayout>
-            <View style={styles.courseActionRow}>
-                <TouchableOpacity
-                    style={styles.courseFolderButton}
-                    activeOpacity={0.7}
-                    onPress={() => navigation.navigate('CourseFolderCreate')}
-                >
-                    <Image source={require('../../assets/add-square.png')} style={styles.courseButtonIcon} />
-                    <Text style={styles.courseFolderButtonText}>폴더 만들기</Text>
-                </TouchableOpacity>
-    
-                <View style={styles.courseRightButtons}>
+        <CourseLayout
+        selectedTab={selectedTab}
+        onTabSelect={(tab) => {
+            setSelectedTab(tab as '내 코스' | '데이트 코스' | '즐겨찾기');
+        }}
+        >
+            {selectedTab === '내 코스' && (
+                <View style={styles.courseActionRow}>
                     <TouchableOpacity
-                        style={styles.courseSmallButton}
+                        style={styles.courseFolderButton}
                         activeOpacity={0.7}
-                        onPress={toggleDeleteMode}
+                        onPress={() => navigation.navigate('CourseFolderSelect')}
                     >
-                        <Image source={require('../../assets/trash.png')} style={styles.courseButtonIcon} />
-                        <Text style={styles.courseSmallButtonText}>{isDeleteMode ? "취소" : "삭제"}</Text>
+                        <Image source={require('../../assets/add-square.png')} style={styles.courseButtonIcon} />
+                        <Text style={styles.courseFolderButtonText}>코스 만들기</Text>
                     </TouchableOpacity>
-    
-                    <TouchableOpacity
-                        style={styles.courseSmallButton}
-                        activeOpacity={0.7}
-                        onPress={toggleEditMode}
-                    >
-                        <Image source={require('../../assets/pencil.png')} style={styles.courseButtonIcon} />
-                        <Text style={styles.courseSmallButtonText}>{isEditMode ? "취소" : "편집"}</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-    
-            {folders.length === 0 ? (
-                <View style={styles.courseEmptyMessageContainer}>
-                    <Text style={styles.courseEmptyMessage}>새로운 폴더를 생성해 보세요!</Text>
-                </View>
-            ) : (
-                <FlatList 
-                    data={folders}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity 
-                            style={styles.courseFolderItem} 
-                            onPress={() => 
-                                isDeleteMode || isEditMode 
-                                ? toggleSelectFolder(item.id) 
-                                : navigation.navigate('CourseFolderDetail', { 
-                                    folderId: Number(item.id), 
-                                    folderTitle: item.title, 
-                                    folderDescription: item.description 
-                                })
-                            }
+        
+                    <View style={styles.courseRightButtons}>
+                        <TouchableOpacity
+                            style={styles.courseSmallButton}
+                            activeOpacity={0.7}
+                            onPress={toggleDeleteMode}
                         >
-                            {(isDeleteMode || isEditMode) && (
-                                <TouchableOpacity
-                                    onPress={() => toggleSelectFolder(item.id)}
-                                    style={styles.checkboxWrapper}
-                                >
-                                    <View style={styles.checkbox}>
-                                    {selectedFolders.includes(item.id) && <View style={styles.checkboxSelected} />}
-                                    </View>
-                                </TouchableOpacity>
-                            )}
-
-                            {item.image && (
-                                <Image 
-                                    source={typeof item.image === 'string' ? { uri: item.image } : item.image} 
-                                    style={styles.courseFolderImage} 
-                                />
-                            )}
-                            <View>
-                                <Text style={styles.courseFolderTitle}>{item.title}</Text>
-                                <Text style={styles.courseFolderDescription}>{item.description}</Text>
-                                <Text style={styles.courseCourseCount}>{item.courseCount}개</Text>
-                            </View>
+                            <Image source={require('../../assets/trash.png')} style={styles.courseButtonIcon} />
+                            <Text style={styles.courseSmallButtonText}>{isDeleteMode ? "취소" : "삭제"}</Text>
                         </TouchableOpacity>
-                    )}
-                />
-            )}
-
-            {!isDeleteMode && !isEditMode && (
-                <View style={styles.courseBottomContainer}>
-                    <TouchableOpacity 
-                        style={styles.createCourseButton} 
-                        onPress={() => navigation.navigate('CourseCreate')}>
-                        <Text style={styles.createCourseButtonText}>+ 코스 만들기</Text>
-                    </TouchableOpacity>
+        
+                        <TouchableOpacity
+                            style={styles.courseSmallButton}
+                            activeOpacity={0.7}
+                            onPress={toggleEditMode}
+                        >
+                            <Image source={require('../../assets/pencil.png')} style={styles.courseButtonIcon} />
+                            <Text style={styles.courseSmallButtonText}>{isEditMode ? "취소" : "편집"}</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
             )}
+    
+            {selectedTab === '내 코스' && (
+                folders.length === 0 ? (
+                    <View style={styles.courseEmptyMessageContainer}>
+                        <Text style={styles.courseEmptyMessage}>새로운 폴더를 생성해 보세요!</Text>
+                    </View>
+                ) : (
+                    <FlatList 
+                        data={folders}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity 
+                                style={styles.courseFolderItem} 
+                                onPress={() => 
+                                    isDeleteMode || isEditMode 
+                                    ? toggleSelectFolder(item.id) 
+                                    : navigation.navigate('CourseFolderDetail', { 
+                                        folderId: Number(item.id), 
+                                        folderTitle: item.title, 
+                                        folderDescription: item.description 
+                                    })
+                                }
+                            >
+                                {(isDeleteMode || isEditMode) && (
+                                    <TouchableOpacity
+                                        onPress={() => toggleSelectFolder(item.id)}
+                                        style={styles.checkboxWrapper}
+                                    >
+                                        <View style={styles.checkbox}>
+                                        {selectedFolders.includes(item.id) && <View style={styles.checkboxSelected} />}
+                                        </View>
+                                    </TouchableOpacity>
+                                )}
 
-            {isDeleteMode && selectedFolders.length > 0 && (
+                                {item.image && (
+                                    <Image 
+                                        source={typeof item.image === 'string' ? { uri: item.image } : item.image} 
+                                        style={styles.courseFolderImage} 
+                                    />
+                                )}
+                                <View>
+                                    <Text style={styles.courseFolderTitle}>{item.title}</Text>
+                                    <Text style={styles.courseFolderDescription}>{item.description}</Text>
+                                    <Text style={styles.courseCourseCount}>{item.courseCount}개</Text>
+                                </View>
+                            </TouchableOpacity>
+                        )}
+                    />
+                )
+            )}
+
+            {selectedTab === '데이트 코스' && (
+                <DateCourseTab />
+            )}
+
+            {selectedTab === '즐겨찾기' && (
+                <FavoriteCourseTab refresh={route.params?.refresh} />
+            )}
+
+            {selectedTab === '내 코스' && isDeleteMode && selectedFolders.length > 0 && (
                 <TouchableOpacity style={styles.confirmButton} onPress={() => setActiveModal('delete')}>
                     <Text style={styles.confirmButtonText}>삭제하기</Text>
                 </TouchableOpacity>
             )}
 
-            {isEditMode && selectedFolders.length === 1 && (
+            {selectedTab === '내 코스' && isEditMode && selectedFolders.length === 1 && (
                 <View style={styles.editActionsContainer}>
                     <TouchableOpacity style={styles.editActionButton} onPress={() => openModal('rename', folders.find(f => f.id === selectedFolders[0])!)}>
                         <Text style={styles.editActionText}>폴더명 수정</Text>

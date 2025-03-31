@@ -2,46 +2,90 @@ import React, { useState, useLayoutEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { CourseStackParamList } from './course-navigation';
+import { useRoute, CommonActions } from '@react-navigation/native';
 
 const tabs = ['데이트 코스', '내 코스', '즐겨찾기'];
 
-const CourseLayout = ({ children }: { children: React.ReactNode }) => {
-    const navigation = useNavigation();
-    const [selectedTab, setSelectedTab] = useState('내 코스');
+type CourseLayoutProps = {
+    selectedTab?: string;
+    onTabSelect?: (tab: string) => void;
+    children: React.ReactNode;
+  };
+
+const CourseLayout = ({ selectedTab, onTabSelect, children }: CourseLayoutProps) => {
+    const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
+    const route = useRoute();
+    const [localTab, setLocalTab] = useState('내 코스');
+    const activeTab = selectedTab ?? localTab;
+    const handleTabSelect = onTabSelect ?? setLocalTab;
+    const noBackButtonScreens = ['CourseScreen', 'DateCourseTab', 'FavoriteCourseTab'];
+
+    const handleTabPress = (tab: string) => {
+        if (tab === activeTab) return;
+
+        handleTabSelect(tab);
+
+        if (tab === '내 코스') {
+            navigation.dispatch(
+                CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'CourseScreen' }]
+                })
+            );
+        } else if (tab === '데이트 코스') {
+            navigation.dispatch(
+                CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'DateCourseTab' }]
+                })
+            );
+        } else if (tab === '즐겨찾기') {
+            navigation.dispatch(
+                CommonActions.reset({
+                    index: 0,
+                    routes: [{ name: 'FavoriteCourseTab' }]
+                })
+            );
+        }
+    };
 
     useLayoutEffect(() => {
         navigation.setOptions({
-            headerTitle: '코스',
-            headerLeft: () => (
+          headerTitle: '코스',
+          headerLeft: noBackButtonScreens.includes(route.name)
+            ? undefined
+            : () => (
                 <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 16 }}>
-                    <Ionicons name="chevron-back" size={24} color="#000" />
+                  <Ionicons name="chevron-back" size={24} color="#000" />
                 </TouchableOpacity>
-            ),
+              ),
         });
-    }, [navigation]);
+      }, [navigation, route.name]);
 
     return (
         <View style={styles.container}>
-            <View style={styles.tabContainer}>
-                {tabs.map((tab) => (
-                    <TouchableOpacity 
-                        key={tab} 
-                        style={[styles.tabItem, selectedTab === tab && styles.activeTab]}
-                        onPress={() => setSelectedTab(tab)}
-                    >
-                        <Text style={[styles.tabText, selectedTab === tab && styles.activeTabText]}>
-                            {tab}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-
-            <View style={styles.contentContainer}>
-                {children}
-            </View>
+          <View style={styles.tabContainer}>
+            {tabs.map((tab) => (
+              <TouchableOpacity 
+                key={tab} 
+                style={[styles.tabItem, selectedTab === tab && styles.activeTab]}
+                onPress={() => handleTabPress(tab)}
+              >
+                <Text style={[styles.tabText, selectedTab === tab && styles.activeTabText]}>
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+    
+          <View style={styles.contentContainer}>
+            {children}
+          </View>
         </View>
-    );
-};
+      );
+    };
 
 const styles = StyleSheet.create({
     container: {
