@@ -26,7 +26,8 @@ export const getRandomQuestion = async () => {
  */
 export const getRandomQuestionList = async (
     lastId?: number,
-    size: number = 10
+    size: number = 10,
+    keyword?: string 
 ) => {
     try {
         const response = await axios.get(`${API_BASE_URL}/list`, {
@@ -36,6 +37,7 @@ export const getRandomQuestionList = async (
             params: {
                 lastId: lastId ?? undefined,
                 size,
+                keyword: keyword ?? undefined, // 검색어가 있을 경우만 전달
             },
         });
 

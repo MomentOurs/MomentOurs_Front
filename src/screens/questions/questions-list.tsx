@@ -14,6 +14,7 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type RootStackParamList = {
     RandomQuestions: { userQuesId: number };
+    QuestionsSearch: undefined;
 };
 
 const QuestionsListScreen = () => {
@@ -116,10 +117,11 @@ const QuestionsListScreen = () => {
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>랜덤질문</Text>
                 <View style={styles.iconContainer}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => navigation.navigate('QuestionsSearch')}>
                         <Ionicons name="search" size={24} color="black" />
                     </TouchableOpacity>
                 </View>
+
             </View>
 
             <FlatList
