@@ -3,7 +3,7 @@ import axios from 'axios';
 const API_BASE_URL = 'http://localhost:8080/api/comment';
 
 // 🔹 Postman에서 받은 토큰을 여기에 직접 할당 (임시용)
-const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXJFbWFpbCI6IjExMTFAbmF2ZXIuY29tIiwicm9sZSI6IlJPTEVfTUVNQkVSIiwiaWF0IjoxNzQyOTk5NDQ2LCJleHAiOjQ4Mzk4OTk5NDQ2fQ.ADkqeN8NSyONjggzToZRvtWQTIi9R0a-fE3E3a252o8';
+const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXJFbWFpbCI6IjExMTFAbmF2ZXIuY29tIiwicm9sZSI6IlJPTEVfTUVNQkVSIiwiaWF0IjoxNzQzMDc3NzMyLCJleHAiOjQ4Mzk5MDc3NzMyfQ.4jj8sOVRdZ92EOZmAZCLCFJxfS_U4zvp1NpeAIpAyCg';
 
 export const getQuestionComment = async (userQuesId: number) => {
     try {

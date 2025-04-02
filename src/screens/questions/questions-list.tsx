@@ -1,36 +1,107 @@
-import React from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
     View,
     Text,
     FlatList,
     TouchableOpacity,
     StyleSheet,
+    ActivityIndicator
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import { getRandomQuestionList } from "../../api/index";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
-const questions = [
-    { id: "120", text: "사랑하는 연인과 가장 행복했던 시간은 언제...", date: "2025.01.04", answered: true },
-    { id: "119", text: "연인과 가장 맛있게 먹었던 음식은?", date: "2024.12.30", answered: true },
-    { id: "118", text: "나만 아는 당신의 습관은?", date: "2024.12.28", answered: false },
-    { id: "117", text: "나만 아는 당신의 습관은?", date: "2024.12.28", answered: false },
-    { id: "116", text: "나만 아는 당신의 습관은?", date: "2024.12.28", answered: false },
-];
+type RootStackParamList = {
+    RandomQuestions: { userQuesId: number };
+};
 
 const QuestionsListScreen = () => {
+    const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+    const [questions, setQuestions] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [hasNext, setHasNext] = useState(true);
+    const [lastId, setLastId] = useState<number | null>(null);
+
+    const fetchQuestions = useCallback(async () => {
+        if (loading || !hasNext) return;
+
+        setLoading(true);
+        try {
+            const res = await getRandomQuestionList(lastId, 10);
+            const { list, nextCursorId, hasNext: more } = res.data;
+
+            if (list.length === 0) {
+                setHasNext(false);
+            } else {
+                setQuestions(prev => [...prev, ...list]);
+                setLastId(nextCursorId);
+                setHasNext(more);
+            }
+        } catch (err) {
+            console.error("❌ 질문 목록 가져오기 실패:", err);
+        } finally {
+            setLoading(false);
+        }
+    }, [lastId, loading, hasNext]);
+
+    useEffect(() => {
+        fetchQuestions();
+    }, []);
+
+    const handlePressQuestion = (item: any) => {
+        navigation.navigate("RandomQuestions", { userQuesId: item.userQuesId });
+    };
+
     const renderItem = ({ item }: { item: any }) => (
-        <TouchableOpacity style={styles.questionContainer}>
+        <TouchableOpacity
+            style={styles.questionContainer}
+            onPress={() => handlePressQuestion(item)}
+        >
             <View style={styles.questionHeader}>
-                <Text style={styles.questionNumber}>#{item.id}</Text>
-                <Text style={styles.questionText}>{item.text}</Text>
+                <Text style={styles.questionNumber}>#{item.userQuesId}</Text>
+                <Text style={styles.questionText}>{item.randomQuestion.quesContent}</Text>
             </View>
             <View style={styles.questionFooter}>
-                <Text style={styles.dateText}>{item.date}</Text>
+                <Text style={styles.dateText}>{item.createdAt.slice(0, 10)}</Text>
                 <View style={styles.answerContainer}>
-                    <TouchableOpacity style={[styles.answerButton, item.answered ? styles.activeButton : styles.inactiveButton]}>
-                        <Text style={[styles.answerText, item.answered ? styles.activeText : styles.inactiveText]}>나</Text>
+                    <TouchableOpacity
+                        style={[
+                            styles.answerButton,
+                            item.ansStatus === "MINE" || item.ansStatus === "ALL"
+                                ? styles.activeButton
+                                : styles.inactiveButton
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.answerText,
+                                item.ansStatus === "MINE" || item.ansStatus === "ALL"
+                                    ? styles.activeText
+                                    : styles.inactiveText
+                            ]}
+                        >
+                            나
+                        </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.answerButton, styles.activeButton]}>
-                        <Text style={[styles.answerText, styles.activeText]}>당신</Text>
+                    <TouchableOpacity
+                        style={[
+                            styles.answerButton,
+                            item.ansStatus === "YOURS" || item.ansStatus === "ALL"
+                                ? styles.activeButton
+                                : styles.inactiveButton
+                        ]}
+                    >
+                        <Text
+                            style={[
+                                styles.answerText,
+                                item.ansStatus === "YOURS" || item.ansStatus === "ALL"
+                                    ? styles.activeText
+                                    : styles.inactiveText
+                            ]}
+                        >
+                            당신
+                        </Text>
                     </TouchableOpacity>
                 </View>
             </View>
@@ -39,7 +110,6 @@ const QuestionsListScreen = () => {
 
     return (
         <View style={styles.container}>
-            {/* 상단 네비게이션 바 */}
             <View style={styles.header}>
                 <TouchableOpacity>
                     <Ionicons name="chevron-back" size={24} color="black" />
@@ -49,28 +119,20 @@ const QuestionsListScreen = () => {
                     <TouchableOpacity>
                         <Ionicons name="search" size={24} color="black" />
                     </TouchableOpacity>
-                    <TouchableOpacity>
-                        <Ionicons name="filter" size={24} color="black" />
-                    </TouchableOpacity>
                 </View>
             </View>
 
-            {/* 질문 리스트 */}
             <FlatList
                 data={questions}
-                keyExtractor={(item) => item.id}
+                keyExtractor={(item) => String(item.userQuesId)}
                 renderItem={renderItem}
                 contentContainerStyle={styles.listContainer}
+                onEndReached={fetchQuestions}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={
+                    loading ? <ActivityIndicator size="small" color="#999" /> : null
+                }
             />
-
-            {/* 하단 네비게이션 바 */}
-            <View style={styles.bottomNav}>
-                <TouchableOpacity style={styles.navItem}><Text style={styles.navTextActive}>Home</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.navItem}><Text style={styles.navTextInactive}>Buy</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.navItem}><Text style={styles.navTextInactive}>WOW</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.navItem}><Text style={styles.navTextInactive}>World</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.navItem}><Text style={styles.navTextInactive}>Profile</Text></TouchableOpacity>
-            </View>
         </View>
     );
 };
@@ -162,27 +224,5 @@ const styles = StyleSheet.create({
     },
     inactiveText: {
         color: "#666",
-    },
-    bottomNav: {
-        flexDirection: "row",
-        justifyContent: "space-around",
-        borderTopWidth: 1,
-        borderTopColor: "#EAEAEA",
-        paddingVertical: 10,
-    },
-    navItem: {
-        alignItems: "center",
-    },
-    navTextActive: {
-        fontSize: 16,
-        fontWeight: "bold",
-        color: "black",
-        borderBottomWidth: 2,
-        borderBottomColor: "black",
-        paddingBottom: 5,
-    },
-    navTextInactive: {
-        fontSize: 16,
-        color: "#D3D3D3",
     },
 });

@@ -1,5 +1,7 @@
 import React from 'react';
+import { TouchableOpacity } from "react-native";
 import { createStackNavigator } from '@react-navigation/stack';
+import { Ionicons } from '@expo/vector-icons'
 import QuestionsScreen from '../../src/screens/questions/questions-container';
 import QuestionsRegisterScreen from '../../src/screens/questions/questions-register';
 import QuestionCommentScreen from '../../src/screens/questions/questions-comment';
@@ -35,12 +37,25 @@ const RandomQuestionsStack = () => {
             }}
         >
             <Stack.Screen
-                name="RandomQuestions"
-                component={QuestionsScreen}
+            name="RandomQuestions"
+            component={QuestionsScreen}
+            options={({ navigation }) => ({
+                title: '랜덤질문',
+                headerBackTitleVisible: false,
+                headerLeft: () => null,  
+                headerRight: () => (
+                <TouchableOpacity
+                    onPress={() => navigation.navigate('QuestionsList')}
+                    style={{ marginRight: 15 }}
+                >
+                    <Ionicons name="list" size={24} color="black" />
+                </TouchableOpacity>
+                ),
+            })}
             />
             <Stack.Screen name="QuestionsRegister" component={QuestionsRegisterScreen} />
             <Stack.Screen name="QuestionComment" component={QuestionCommentScreen} options={{ headerShown: false }}/>
-            <Stack.Screen name="QuestionsList" component={QuestionsListScreen} />
+            <Stack.Screen name="QuestionsList" component={QuestionsListScreen} options={{ headerShown: false }} />
             <Stack.Screen name="QuestionsUpdate" component={QuestionsUpdateScreen} />
 
         </Stack.Navigator>
