@@ -9,8 +9,6 @@ import CourseLocationDeleteModal from '../../components/modals/course/CourseLoca
 import { NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, NAVER_BASE_URL } from '@env';
 
 type DateCourseLocation = {
-    courseLocationId: number;
-    courseId: number;
     locationId: number;
     locationName: string;
     address: string;
@@ -18,13 +16,8 @@ type DateCourseLocation = {
     longitude: number;
     sequence: number;
     courseMemo?: string;
-};
-
-const dummyLocations: DateCourseLocation[] = [
-    { courseLocationId: 1, courseId: 1, locationId: 1, locationName: '황리단길', address: '경상북도 경주시 황남동 포석로 일대', latitude: 35.8344, longitude: 129.2043, sequence: 1, courseMemo: '핫플레이스 카페 및 맛집 밀집 지역' },
-    { courseLocationId: 2, courseId: 1, locationId: 2, locationName: '포석정지', address: '경상북도 경주시 배동 남산순환로 816', latitude: 35.7861, longitude: 129.2914, sequence: 2, courseMemo: '신라 왕궁의 역사적인 장소' },
-    { courseLocationId: 3, courseId: 1, locationId: 3, locationName: '하나로마트 경주농협본점', address: '경상북도 경주시 태종로 717', latitude: 35.8429, longitude: 129.2121, sequence: 3, courseMemo: '지역 특산물을 저렴하게 구매 가능' },
-];
+  };
+  
 
 const CourseDetail = () => {
     const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
@@ -38,7 +31,7 @@ const CourseDetail = () => {
         courseEndDate: string;
     };
 
-    const [locations, setLocations] = useState<DateCourseLocation[]>(dummyLocations);
+    const [locations, setLocations] = useState<DateCourseLocation[]>([]);
     const [mapData, setMapData] = useState<{ addresses?: { x: string; y: string }[] } | null>(null);
     const [loading, setLoading] = useState(false);
     const [isMapVisible, setIsMapVisible] = useState(false);
@@ -47,19 +40,34 @@ const CourseDetail = () => {
     const [selectedLocations, setSelectedLocations] = useState<number[]>([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-    // ✅ 실제 API 연동 시 활성화
-    // const fetchCourseLocations = async () => {
-    //     try {
-    //         const response = await fetch(`http://localhost:8080/api/course/${courseId}/locations`);
-    //         if (!response.ok) throw new Error('Failed to fetch locations');
-    //         const data = await response.json();
-    //         setLocations(data);
-    //     } catch (error) {
-    //         console.error('Error fetching locations:', error);
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
+    useEffect(() => {
+        fetchCourseDetail();
+      }, []);
+      
+    const fetchCourseDetail = async () => {
+        try {
+            setLoading(true);
+            // const token = await SecureStore.getItemAsync('accessToken');
+            // const token = '(로그인 후 액세스 토큰 입력)';
+            const response = await fetch(`http://localhost:8080/api/course/${courseId}`, {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+          });
+      
+          if (!response.ok) throw new Error('코스 상세 조회 실패');
+      
+          const data = await response.json();
+      
+          setLocations(data.locations);
+        } catch (error) {
+          console.error('코스 상세 조회 실패:', error);
+        } finally {
+          setLoading(false);
+        }
+    };
+      
 
     const fetchNaverMapData = async () => {
         try {
@@ -79,18 +87,12 @@ const CourseDetail = () => {
 
             const data = await response.json();
             setMapData(data);
-            console.log('네이버 지도 데이터:', data);
         } catch (error) {
             console.error('네이버 지도 데이터 가져오기 실패:', error);
         } finally {
             setLoading(false);
         }
     };
-
-    useEffect(() => {
-        setTimeout(() => setLoading(false), 1000);
-        // fetchCourseLocations(); // 🔹 API 연동 시 주석 해제
-    }, []);
 
     const toggleDeleteMode = () => {
         setIsDeleteMode(!isDeleteMode);
@@ -105,7 +107,7 @@ const CourseDetail = () => {
 
     const confirmDelete = () => {
         setShowDeleteModal(false);
-        setLocations(locations.filter(loc => !selectedLocations.includes(loc.courseLocationId)));
+        setLocations(locations.filter(loc => !selectedLocations.includes(loc.locationId)));
         setIsDeleteMode(false);
     };
 
@@ -145,7 +147,9 @@ const CourseDetail = () => {
             <View style={styles.courseHeader}>
                 <View>
                     <Text style={styles.courseTitle}>{courseTitle}</Text>
-                    <Text style={styles.courseDate}>{courseStartDate} ~ {courseEndDate}</Text>
+                    <Text style={styles.courseDate}>
+                        {courseStartDate?.substring(0, 10)} ~ {courseEndDate?.substring(0, 10)}
+                    </Text>
                 </View>
                 <TouchableOpacity style={styles.mapButton} onPress={toggleMapView}>
                     <Text style={styles.mapButtonText}>{isMapVisible ? "지도 닫기" : "지도 보기"}</Text>
@@ -173,7 +177,7 @@ const CourseDetail = () => {
                     >
                         {locations.map((location) => (
                             <NaverMapMarkerOverlay
-                                key={location.courseLocationId}
+                                key={location.locationId}
                                 latitude={location.latitude}
                                 longitude={location.longitude}
                                 width={30}
@@ -186,17 +190,17 @@ const CourseDetail = () => {
 
             <FlatList
                 data={locations}
-                keyExtractor={(item) => item.courseLocationId.toString()}
+                keyExtractor={(item) => item.locationId.toString()}
                 renderItem={({ item }) => (
                     <TouchableOpacity
                         style={styles.locationItem}
-                        onPress={() => isDeleteMode ? toggleSelectLocation(item.courseLocationId) : null}
+                        onPress={() => isDeleteMode ? toggleSelectLocation(item.locationId) : null}
                     >
                         <View style={styles.locationRow}>
                             {isDeleteMode && (
-                                <TouchableOpacity onPress={() => toggleSelectLocation(item.courseLocationId)} style={styles.checkboxWrapper}>
+                                <TouchableOpacity onPress={() => toggleSelectLocation(item.locationId)} style={styles.checkboxWrapper}>
                                 <View style={styles.checkbox}>
-                                    {selectedLocations.includes(item.courseLocationId) && <View style={styles.checkboxSelected} />}
+                                    {selectedLocations.includes(item.locationId) && <View style={styles.checkboxSelected} />}
                                 </View>
                                 </TouchableOpacity>
                             )}

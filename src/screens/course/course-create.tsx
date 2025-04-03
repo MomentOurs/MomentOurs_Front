@@ -1,7 +1,7 @@
 import React, { useState, useLayoutEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Switch, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -20,25 +20,52 @@ const CourseCreateScreen = () => {
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!courseTitle.trim()) {
       Alert.alert('코스 제목을 입력해주세요.');
       return;
     }
-
+  
     const payload = {
       courseTitle,
       courseType,
       courseDisclosure: isPublic,
-      courseStartDate: courseType === 'DATE' ? startDate.toISOString().split('T')[0] + 'T00:00:00' : startDate.toISOString().split('T')[0] + 'T00:00:00',
-      courseEndDate: courseType === 'DATE' ? startDate.toISOString().split('T')[0] + 'T23:59:59' : endDate.toISOString().split('T')[0] + 'T23:59:59',
+      courseStartDate: courseType === 'DATE'
+        ? startDate.toISOString().split('T')[0] + 'T00:00:00'
+        : startDate.toISOString().split('T')[0] + 'T00:00:00',
+      courseEndDate: courseType === 'DATE'
+        ? startDate.toISOString().split('T')[0] + 'T23:59:59'
+        : endDate.toISOString().split('T')[0] + 'T23:59:59',
       folderId,
-      memberId: 1, // TODO: 실제 로그인 유저 ID로 변경
+      locations: [],
     };
+  
+    try {
+      // const token = await SecureStore.getItemAsync('accessToken');
+      // const token = '(로그인 후 액세스 토큰 입력)';
+      const response = await fetch('http://localhost:8080/api/course', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+  
+      if (!response.ok) throw new Error('코스 생성 실패');
+      const data = await response.json();
 
-    console.log('코스 생성 요청:', payload);
-    Alert.alert('코스가 생성되었습니다!');
-    navigation.navigate('CourseScreen', { refresh: true });
+      Alert.alert('코스가 생성되었습니다!');
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: 'CourseScreen', params: { refresh: true } }],
+        })
+      );
+    } catch (err) {
+      Alert.alert('오류', '코스를 생성할 수 없습니다.');
+      console.error(err);
+    }
   };
 
   useLayoutEffect(() => {

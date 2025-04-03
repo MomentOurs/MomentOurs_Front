@@ -18,34 +18,44 @@ const CourseFolderDetail = () => {
     const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
     const route = useRoute();
     const { folderId, folderTitle, folderDescription } = route.params as { folderId: number; folderTitle: string; folderDescription: string };
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const [courses, setCourses] = useState<Course[]>([
-        { courseId: 1, courseTitle: '2월 경주여행 (맛집 위주)', courseType: 'TRIP', courseStartDate: '2024-02-10', courseEndDate: '2024-02-12' },
-        { courseId: 2, courseTitle: '2월 경주여행 (볼거리 위주)', courseType: 'TRIP', courseStartDate: '2024-02-10', courseEndDate: '2024-02-12' },
-        { courseId: 3, courseTitle: '2월 경주여행 (최종)', courseType: 'TRIP', courseStartDate: '2024-02-10', courseEndDate: '2024-02-12' },
-    ]);
-    const [loading, setLoading] = useState(false); // API 없이 바로 표시하므로 false
-
-    // 아래 주석은 api 요청 시 주석 해제
-    // const [courses, setCourses] = useState<Course[]>([]);
-    // const [loading, setLoading] = useState(true);
-
-    // useEffect(() => {
-    //     fetchCourses();
-    // }, []);
-
-    // const fetchCourses = async () => {
-    //     try {
-    //         const response = await fetch(`http://localhost:8080/api/course/folder/${folderId}`);
-    //         if (!response.ok) throw new Error('Failed to fetch courses');
-    //         const data = await response.json();
-    //         setCourses(data);
-    //     } catch (error) {
-    //         console.error('Error fetching courses:', error);
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
+    useEffect(() => {
+        fetchCourses();
+    }, []);
+    
+    const fetchCourses = async () => {
+        try {
+            // const token = await SecureStore.getItemAsync('accessToken');
+            // const token = '(로그인 후 액세스 토큰 입력)';
+            const response = await fetch(`http://localhost:8080/api/course/folder/${folderId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+    
+            if (!response.ok) throw new Error('Failed to fetch courses');
+            const data = await response.json();
+    
+            const mappedCourses = data.map((item: any) => ({
+                courseId: item.courseId,
+                courseTitle: item.courseTitle,
+                courseType: item.courseType,
+                courseStartDate: item.courseStartDate,
+                courseEndDate: item.courseEndDate,
+            }));
+          
+            setCourses(mappedCourses);
+        } catch (error) {
+            console.error('폴더 내 코스 조회 실패:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
 
     const [selectedTab, setSelectedTab] = useState('내 코스');
     const [isDeleteMode, setIsDeleteMode] = useState(false);

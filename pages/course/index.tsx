@@ -7,6 +7,7 @@ import CourseLayout from '../../src/screens/course/course-layout';
 import { RenameFolderModal, RenameDescriptionModal, DeleteFolderModal } from '../../src/components/modals/course';
 import DateCourseTab from './datecourse-tab';
 import FavoriteCourseTab from './favorite-course-tab';
+import * as SecureStore from 'expo-secure-store';
 
 type Folder = {
     id: string;
@@ -38,70 +39,54 @@ const CourseScreen = () => {
     const [modalData, setModalData] = useState<{ folderName: string; text: string }>({ folderName: '', text: '' });
 
     useEffect(() => {
-        // 실제 API 호출 (주석 처리해둠, 필요 시 활성화)
-        // fetchFolders();
-
-        setFolders([
-            { 
-                id: '1', 
-                title: '경주 관광지/To do', 
-                description: '경주여행 관광 리스트', 
-                courseCount: 3, 
-                image: require('../../assets/image (1).png') 
-            },
-            { 
-                id: '2', 
-                title: '맛집 리스트', 
-                description: '가고 싶은 맛집, 카페', 
-                courseCount: 5, 
-                image: require('../../assets/image (2).png') 
-            },
-        ]);
-        setLoading(false);
+        fetchFolders();
     }, []);
 
-    // const fetchFolders = async () => {
-    //     try {
-    //         const response = await fetch('http://localhost:8080/api/course-folder', {
-    //             method: 'GET',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 Authorization: `Bearer YOUR_ACCESS_TOKEN`, // 실제 토큰 필요
-    //             },
-    //         });
+    const fetchFolders = async () => {
+        try {
+            // const token = await SecureStore.getItemAsync('accessToken');
+            // const token = '(로그인 후 액세스 토큰 입력)';
+            if (!token) {
+                console.warn('⚠️ 토큰이 없습니다. 로그인 상태를 확인해주세요.');
+                return;
+            }
 
-    //         if (!response.ok) {
-    //             throw new Error('Failed to fetch folders');
-    //         }
+            const response = await fetch('http://localhost:8080/api/course-folder', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to fetch folders');
+            }
+    
+            const data = await response.json();
+    
+            setFolders(data.map((folder: any) => ({
+                id: folder.folder_id.toString(),
+                title: folder.folder_name,
+                description: folder.folder_description,
+                courseCount: folder.course_count,
+                image: folder.folder_image ? { uri: folder.folder_image } : undefined,
+            })));
+    
+        } catch (error) {
+            console.error('Error fetching folders:', error);
+        } finally {
+            setLoading(false);
+        }
+    };    
 
-    //         const data = await response.json();
-            
-    //         setFolders(data.map((folder: any) => ({
-    //             id: folder.folderId,
-    //             title: folder.folderName,
-    //             description: folder.folderDescription,
-    //             courseCount: folder.courseCount,
-    //             image: folder.folderImage || undefined,
-    //         })));
-
-    //     } catch (error) {
-    //         console.error('Error fetching folders:', error);
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
-
-    // useEffect(() => {
-    //     fetchFolders();
-    // }, []);
-
-    // useFocusEffect(
-    //     useCallback(() => {
-    //         if (route.params?.refresh) {
-    //             fetchFolders();
-    //         }
-    //     }, [route.params])
-    // );
+    useFocusEffect(
+        useCallback(() => {
+            if (route.params?.refresh) {
+                fetchFolders();
+            }
+        }, [route.params])
+    );
 
     const toggleEditMode = () => {
         setIsEditMode(!isEditMode);

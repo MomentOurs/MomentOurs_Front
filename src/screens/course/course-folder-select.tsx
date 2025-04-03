@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useLayoutEffect, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,14 +20,9 @@ type Folder = {
   title: string;
 };
 
-const dummyFolders: Folder[] = [
-  { id: 1, title: '경주 여행 폴더' },
-  { id: 2, title: '맛집 리스트' },
-];
-
 const CourseFolderSelectScreen = () => {
   const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
-
+  const [folders, setFolders] = useState<Folder[]>([]);
   const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [newFolderTitle, setNewFolderTitle] = useState('');
@@ -51,39 +46,92 @@ const CourseFolderSelectScreen = () => {
     }
   };
 
-  const handleProceed = () => {
+  useEffect(() => {
+    const fetchFolders = async () => {
+      try {
+        // const token = await SecureStore.getItemAsync('accessToken');
+        const token = 'eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXJFbWFpbCI6ImNobzk3NTlAZ21haWwuY29tIiwicm9sZSI6IlJPTEVfQ09VUExFIiwiaWF0IjoxNzQzNTk4NTUxLCJleHAiOjQ4Mzk5NTk4NTUxfQ.HAT3ySMyvOWwOkbHrs3gnDINrnGT-4GSdvSJwfnxMW8';
+        const response = await fetch('http://localhost:8080/api/course-folder', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        if (!response.ok) throw new Error('폴더 조회 실패');
+        const data = await response.json();
+  
+        const mapped = data.map((item: any) => ({
+          id: item.folder_id,
+          title: item.folder_name,
+        }));
+  
+        setFolders(mapped);
+      } catch (err) {
+        console.error('❌ 폴더 조회 실패:', err);
+      }
+    };
+  
+    fetchFolders();
+  }, []);
+
+  const handleProceed = async () => {
     if (isCreatingNew) {
       if (!newFolderTitle.trim()) {
         Alert.alert('알림', '폴더 제목을 입력해주세요.');
         return;
       }
-
-      const newFolderId = Date.now();
-
-      navigation.navigate('CourseCreate', {
-        folderId: newFolderId,
-        folderTitle: newFolderTitle,
-      });
+  
+      try {
+        // const token = await SecureStore.getItemAsync('accessToken');
+        // const token = '(로그인 후 액세스 토큰 입력)';
+        const payload = {
+          folder_name: newFolderTitle,
+          folder_description: newFolderDescription, // optional
+          folder_image: selectedImage,              // optional (base64 or url 처리)
+        };
+  
+        const response = await fetch('http://localhost:8080/api/course-folder', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+  
+        if (!response.ok) throw new Error('폴더 생성 실패');
+        const data = await response.json();
+  
+        navigation.navigate('CourseCreate', {
+          folderId: data.folder_id,
+          folderTitle: data.folder_name,
+        });
+      } catch (err) {
+        Alert.alert('오류', '폴더를 생성할 수 없습니다.');
+        console.error(err);
+      }
     } else {
-      const selected = dummyFolders.find((f) => f.id === selectedFolderId);
+      const selected = folders.find((f) => f.id === selectedFolderId);
       if (!selected) {
-        Alert.alert('알림', '기존 폴더를 선택하거나 새 폴더를 생성해주세요.');
+        Alert.alert('알림', '기존 폴더를 선택해주세요.');
         return;
       }
-
+  
       navigation.navigate('CourseCreate', {
         folderId: selected.id,
         folderTitle: selected.title,
       });
     }
   };
-
+  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>폴더 선택</Text>
 
       <FlatList
-        data={dummyFolders}
+        data={folders}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity

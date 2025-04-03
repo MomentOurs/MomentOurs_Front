@@ -5,6 +5,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from '../../src/screens/course/course-navigation';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import * as SecureStore from 'expo-secure-store';
 
 type Course = {
   id: number;
@@ -14,66 +15,72 @@ type Course = {
   views: number;
 };
 
-const dummyCourses: Course[] = [
-  { id: 1, title: '2월 경주여행 (맛집 위주)', courseType: 'TRIP', likes: 120, views: 300 },
-  { id: 2, title: '3월 봄꽃 데이트', courseType: 'DATE', likes: 98, views: 250 },
-];
+type ResponseDateCourseListVO = {
+  course_id: number;
+  course_title: string;
+  course_type: 'DATE' | 'TRIP';
+  course_like: number;
+  course_view: number;
+  course_start_date: string;
+  course_end_date: string;
+  member_id: number;
+};
 
 const DateCourseTab = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'likes' | 'views'>('likes');
-  const [courses, setCourses] = useState(dummyCourses);
+  const [courses, setCourses] = useState<Course[]>([]);
   const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
 
   const handleSearchConfirm = () => {
     if (!searchQuery.trim()) {
-      setCourses(dummyCourses);
       return;
     }
   
-    const filtered = dummyCourses.filter(course =>
+    const filtered = courses.filter(course =>
       course.title.includes(searchQuery.trim())
     );
   
     setCourses(filtered);
-  };
+  };  
 
   useEffect(() => {
-    // 추후 실제 API 호출 시 사용
-    // const fetchCourses = async () => {
-    //   try {
-    //     const token = 'YOUR_ACCESS_TOKEN'; // 예: AsyncStorage.getItem('accessToken')
-    //     const response = await fetch(`http://localhost:8080/api/course?sortBy=${sortBy}`, {
-    //       method: 'GET',
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //         Authorization: `Bearer ${token}`,
-    //       },
-    //     });
+    const fetchCourses = async () => {
+      try {
+        // const token = await SecureStore.getItemAsync('accessToken');
+        // const token = '(로그인 후 액세스 토큰 입력)';
   
-    //     if (!response.ok) {
-    //       throw new Error('서버 응답 오류');
-    //     }
+        const response = await fetch(`http://localhost:8080/api/course?sortBy=${sortBy}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
   
-    //     const data: ResponseDateCourseListVO[] = await response.json();
+        if (!response.ok) {
+          throw new Error('서버 응답 오류');
+        }
   
-    //     const mapped = data.map((item) => ({
-    //       id: item.courseId,
-    //       title: item.courseTitle,
-    //       courseType: item.courseType,
-    //       likes: item.courseLike,
-    //       views: item.courseView,
-    //     }));
+        const data: ResponseDateCourseListVO[] = await response.json();
+
+        const mapped = data.map((item) => ({
+          id: item.course_id,
+          title: item.course_title,
+          courseType: item.course_type,
+          likes: item.course_like,
+          views: item.course_view,
+        }));
   
-    //     setCourses(mapped);
-    //   } catch (err) {
-    //     console.error('데이트 코스 불러오기 실패:', err);
-    //     // Alert.alert('오류', '데이트 코스를 불러오지 못했어요.');
-    //   }
-    // };
+        setCourses(mapped);
+      } catch (err) {
+        console.error('데이트 코스 불러오기 실패:', err);
+      }
+    };
   
-    // fetchCourses();
+    fetchCourses();
   }, [sortBy]);
+  
 
   const sortedCourses = [...courses].sort((a, b) => b[sortBy] - a[sortBy]);
   

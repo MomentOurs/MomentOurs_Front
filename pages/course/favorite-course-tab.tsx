@@ -4,12 +4,13 @@ import CourseLayout from '../../src/screens/course/course-layout';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from '../../src/screens/course/course-navigation';
+import * as SecureStore from 'expo-secure-store';
 
 interface Folder {
-  courseScrapFolderId: number;
-  folderName: string;
-  courseCount: number;
-  folderImage?: string;
+  course_scrap_folder_id: number;
+  folder_name: string;
+  course_count: number;
+  folder_image?: string;
 }
 
 const FavoriteCourseTab = ({ refresh }: { refresh?: boolean }) => {
@@ -18,40 +19,45 @@ const FavoriteCourseTab = ({ refresh }: { refresh?: boolean }) => {
   const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
   const route = useRoute();
 
-  
+  useEffect(() => {
+    fetchFavoriteFolders();
+  }, []);  
 
+  useFocusEffect(
+    useCallback(() => {
+      fetchFavoriteFolders();
+    }, [])
+  );
+  
   const fetchFavoriteFolders = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/course-scrap-folder', {
+        // const token = await SecureStore.getItemAsync('accessToken');
+        // const token = '(로그인 후 액세스 토큰 입력)';
+        const response = await fetch('http://localhost:8080/api/course-scrap-folder', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer YOUR_ACCESS_TOKEN`,
+          Authorization: `Bearer ${token}`,
         },
       });
   
       if (!response.ok) throw new Error('Failed to fetch favorite folders');
   
       const data = await response.json();
+  
       setFolders(data);
     } catch (error) {
-      console.error('Error fetching favorite folders:', error);
+      console.error('❌ Error fetching favorite folders:', error);
     } finally {
       setLoading(false);
     }
-  };
-  
-  useEffect(() => {
-    if (refresh) {
-      fetchFavoriteFolders();
-    }
-  }, [refresh]);
+  };  
 
   return (
     <CourseLayout selectedTab="즐겨찾기" onTabSelect={() => {}}>
       <TouchableOpacity
         style={styles.createFolderButton}
-        onPress={() => navigation.navigate('FavoriteCourseTab', { refreshFavorite: true })}
+        onPress={() => navigation.navigate('FavoriteFolderCreate')}
       >
         <Image source={require('../../assets/add-square.png')} style={styles.createFolderIcon} />
         <Text style={styles.createFolderText}>폴더 만들기</Text>
@@ -67,19 +73,19 @@ const FavoriteCourseTab = ({ refresh }: { refresh?: boolean }) => {
       ) : (
         <FlatList
           data={folders}
-          keyExtractor={(item) => item.courseScrapFolderId.toString()}
+          keyExtractor={(item) => item.course_scrap_folder_id.toString()}
           contentContainerStyle={{ padding: 12 }}
           renderItem={({ item }) => (
             <TouchableOpacity style={styles.folderItem}>
-              {item.folderImage && (
+              {item.folder_image && (
                 <Image
-                  source={{ uri: item.folderImage }}
+                  source={{ uri: item.folder_image }}
                   style={styles.folderImage}
                 />
               )}
               <View>
-                <Text style={styles.folderTitle}>{item.folderName}</Text>
-                <Text style={styles.folderCourseCount}>{item.courseCount}개</Text>
+                <Text style={styles.folderTitle}>{item.folder_name}</Text>
+                <Text style={styles.folderCourseCount}>{item.course_count}개</Text>
               </View>
             </TouchableOpacity>
           )}

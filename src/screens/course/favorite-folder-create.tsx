@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -29,7 +29,7 @@ const FavoriteFolderCreateScreen = () => {
     formData.append('folderName', folderTitle);
     formData.append('folderDescription', folderDescription);
     if (selectedImage) {
-      formData.append('image', {
+      formData.append('folderImage', {
         uri: selectedImage,
         name: 'folder.jpg',
         type: 'image/jpeg',
@@ -37,11 +37,12 @@ const FavoriteFolderCreateScreen = () => {
     }
 
     try {
+      // const token = await SecureStore.getItemAsync('accessToken');
+      // const token = '(로그인 후 액세스 토큰 입력)';
       const response = await fetch('http://localhost:8080/api/course-scrap-folder', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer YOUR_ACCESS_TOKEN`,
-          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
@@ -50,16 +51,23 @@ const FavoriteFolderCreateScreen = () => {
 
       Alert.alert('완료', '폴더가 생성되었습니다.');
 
-      navigation.navigate('CourseScreen', {
-        initialTab: '즐겨찾기',
-        refresh: true,
-      });
+      navigation.goBack();
       
     } catch (err) {
       Alert.alert('오류', '폴더 생성 중 문제가 발생했습니다.');
       console.error(err);
     }
   };
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+        headerLeft: () => (
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+                <Ionicons name="chevron-back" size={24} color="#000" />
+            </TouchableOpacity>
+        ),
+    });
+}, [navigation]);
 
   return (
     <View style={styles.container}>
@@ -98,6 +106,7 @@ const FavoriteFolderCreateScreen = () => {
 export default FavoriteFolderCreateScreen;
 
 const styles = StyleSheet.create({
+  backButton: {paddingHorizontal: 16,justifyContent: 'center',alignItems: 'center',},
   container: { flex: 1, padding: 24, backgroundColor: '#fff' },
   imageWrapper: { alignItems: 'center', marginBottom: 16 },
   imagePicker: {

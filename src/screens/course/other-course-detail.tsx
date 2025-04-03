@@ -1,21 +1,22 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Image, Animated } from 'react-native';
-import { useRoute } from '@react-navigation/native';
+import { useRoute, useNavigation } from '@react-navigation/native';
 import { NaverMapView, NaverMapMarkerOverlay } from '@mj-studio/react-native-naver-map';
 import CourseLayout from './course-layout';
 import ReportModal from '../../components/modals/course/ReportModal';
+import CourseScrapModal from '../../components/modals/course/CourseScrapModal';
+import { useScrapCourse } from '../../hooks/UseScrapCourse';
 import { NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, NAVER_BASE_URL } from '@env';
 
 type DateCourseLocation = {
-    courseLocationId: number;
-    courseId: number;
-    locationId: number;
-    locationName: string;
-    address: string;
-    latitude: number;
-    longitude: number;
-    sequence: number;
-    courseMemo?: string;
+  course_id: number;
+  location_id: number;
+  location_name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  sequence: number;
+  course_memo?: string;
 };
 
 type RouteParams = {
@@ -29,6 +30,7 @@ type RouteParams = {
 const OtherCourseDetail = () => {
   const [locations, setLocations] = useState<DateCourseLocation[]>([]);
   const route = useRoute();
+  const navigation = useNavigation();
   const { courseId, courseTitle, courseType, courseStartDate, courseEndDate } = route.params as RouteParams;
   
   const [isMapVisible, setIsMapVisible] = useState(false);
@@ -36,39 +38,55 @@ const OtherCourseDetail = () => {
   const [loading, setLoading] = useState(false);
   const slideAnim = useRef(new Animated.Value(-300)).current;
 
+  const {
+    folders,
+    status,
+    selectedFolderId,
+    setSelectedFolderId,
+    scrapTargetName,
+    isModalVisible,
+    setIsModalVisible,
+    openScrapModal,
+    handleCreateNavigate,
+    handleScrap,
+  } = useScrapCourse();
 
   useEffect(() => {
-    // TODO: 실제 courseId 기반 장소 조회 API 호출
-    setLocations([
-        {
-          courseLocationId: 1,
-          courseId: courseId,
-          locationId: 1,
-          locationName: '황리단길',
-          address: '경상북도 경주시 황남동 포석로 일대',
-          latitude: 35.8344,
-          longitude: 129.2043,
-          sequence: 1,
-          courseMemo: '핫플레이스 카페 및 맛집 밀집 지역',
-        },
-        {
-          courseLocationId: 2,
-          courseId: courseId,
-          locationId: 2,
-          locationName: '포석정지',
-          address: '경상북도 경주시 배동 남산순환로 816',
-          latitude: 35.7861,
-          longitude: 129.2914,
-          sequence: 2,
-          courseMemo: '신라 왕궁의 역사적인 장소',
+    const fetchCourseDetail = async () => {
+      try {
+        setLoading(true);
+        // const token = await SecureStore.getItemAsync('accessToken');
+        // const token = '(로그인 후 액세스 토큰 입력)';
+        const response = await fetch(`http://localhost:8080/api/course/${courseId}`, {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        if (!response.ok) {
+          throw new Error('데이트 코스 상세 조회 실패');
         }
-    ]);
-  }, [courseId]);
+  
+        const data = await response.json();
+        setLocations(data.locations);
+      } catch (error) {
+        console.error('데이트 코스 상세 조회 중 오류:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchCourseDetail();
+  }, [courseId]);  
 
   const handleReportSubmit = (reason) => {
     setShowReportModal(false);
     console.log('신고 사유:', reason);
-    // TODO: 신고 API 호출
+  };
+
+  const onAddToFavorite = () => {
+    openScrapModal(courseTitle);
   };
 
   const toggleMapView = async () => {
@@ -76,11 +94,8 @@ const OtherCourseDetail = () => {
       setIsMapVisible(true);
       setLoading(true);
   
-      // TODO: 네이버 API 실제 호출 시 필요
-      // await fetchNaverMapData();
-  
       Animated.timing(slideAnim, {
-        toValue: 250, // 보일 높이
+        toValue: 250,
         duration: 300,
         useNativeDriver: false,
       }).start(() => setLoading(false));
@@ -126,7 +141,7 @@ const OtherCourseDetail = () => {
                 >
                 {locations.map(loc => (
                 <NaverMapMarkerOverlay
-                key={loc.courseLocationId}
+                key={loc.location_id}
                 latitude={loc.latitude}
                 longitude={loc.longitude}
                 width={30}
@@ -139,19 +154,19 @@ const OtherCourseDetail = () => {
 
       <FlatList
         data={locations}
-        keyExtractor={(item) => item.courseLocationId.toString()}
+        keyExtractor={(item) => item.location_id.toString()}
         renderItem={({ item }) => (
           <View style={styles.locationItem}>
-            <Text style={styles.locationName}>{item.locationName}</Text>
+            <Text style={styles.locationName}>{item.location_name}</Text>
             <Text style={styles.locationAddress}>{item.address}</Text>
-            {item.courseMemo && <Text style={styles.courseMemo}>{item.courseMemo}</Text>}
+            {item.course_memo && <Text style={styles.courseMemo}>{item.course_memo}</Text>}
           </View>
         )}
       />
 
       <View style={styles.bottomButtons}>
-        <TouchableOpacity style={styles.registerButton} onPress={() => console.log('내 코스에 추가')}>
-          <Text style={styles.registerButtonText}>즐겨찾기에 추가</Text>
+        <TouchableOpacity style={styles.registerButton} onPress={onAddToFavorite}>
+            <Text style={styles.registerButtonText}>즐겨찾기에 추가</Text>
         </TouchableOpacity>
       </View>
 
@@ -159,6 +174,18 @@ const OtherCourseDetail = () => {
         visible={showReportModal}
         onClose={() => setShowReportModal(false)}
         onConfirm={handleReportSubmit}
+      />
+
+      <CourseScrapModal
+        visible={isModalVisible}
+        status={status}
+        folders={folders}
+        selectedFolderId={selectedFolderId}
+        setSelectedFolderId={setSelectedFolderId}
+        scrapTargetName={scrapTargetName}
+        onCreatePress={() => handleCreateNavigate(navigation)}
+        onConfirmPress={() => handleScrap(courseId)}
+        onClose={() => setIsModalVisible(false)}
       />
     </CourseLayout>
   );
