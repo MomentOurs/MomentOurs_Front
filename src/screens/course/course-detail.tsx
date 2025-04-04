@@ -7,6 +7,7 @@ import { CourseStackParamList } from './course-navigation';
 import CourseLayout from './course-layout';
 import CourseLocationDeleteModal from '../../components/modals/course/CourseLocationDeleteModal';
 import { NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, NAVER_BASE_URL } from '@env';
+import * as SecureStore from 'expo-secure-store';
 
 type DateCourseLocation = {
     locationId: number;
@@ -47,7 +48,7 @@ const CourseDetail = () => {
     const fetchCourseDetail = async () => {
         try {
             setLoading(true);
-            // const token = await SecureStore.getItemAsync('accessToken');
+            const token = await SecureStore.getItemAsync('accessToken');
             // const token = '(로그인 후 액세스 토큰 입력)';
             const response = await fetch(`http://localhost:8080/api/course/${courseId}`, {
             headers: {

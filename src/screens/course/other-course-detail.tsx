@@ -6,6 +6,7 @@ import CourseLayout from './course-layout';
 import ReportModal from '../../components/modals/course/ReportModal';
 import CourseScrapModal from '../../components/modals/course/CourseScrapModal';
 import { useScrapCourse } from '../../hooks/UseScrapCourse';
+import * as SecureStore from 'expo-secure-store';
 import { NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, NAVER_BASE_URL } from '@env';
 
 type DateCourseLocation = {
@@ -55,7 +56,7 @@ const OtherCourseDetail = () => {
     const fetchCourseDetail = async () => {
       try {
         setLoading(true);
-        // const token = await SecureStore.getItemAsync('accessToken');
+        const token = await SecureStore.getItemAsync('accessToken');
         // const token = '(로그인 후 액세스 토큰 입력)';
         const response = await fetch(`http://localhost:8080/api/course/${courseId}`, {
           headers: {

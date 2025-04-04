@@ -47,7 +47,7 @@ const DateCourseTab = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        // const token = await SecureStore.getItemAsync('accessToken');
+        const token = await SecureStore.getItemAsync('accessToken');
         // const token = '(로그인 후 액세스 토큰 입력)';
   
         const response = await fetch(`http://localhost:8080/api/course?sortBy=${sortBy}`, {

@@ -44,7 +44,7 @@ const CourseScreen = () => {
 
     const fetchFolders = async () => {
         try {
-            // const token = await SecureStore.getItemAsync('accessToken');
+            const token = await SecureStore.getItemAsync('accessToken');
             // const token = '(로그인 후 액세스 토큰 입력)';
             if (!token) {
                 console.warn('⚠️ 토큰이 없습니다. 로그인 상태를 확인해주세요.');

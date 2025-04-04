@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import * as SecureStore from 'expo-secure-store';
 
 type Folder = {
   id: number;
@@ -49,7 +50,7 @@ const CourseFolderSelectScreen = () => {
   useEffect(() => {
     const fetchFolders = async () => {
       try {
-        // const token = await SecureStore.getItemAsync('accessToken');
+        const token = await SecureStore.getItemAsync('accessToken');
         const token = 'eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXJFbWFpbCI6ImNobzk3NTlAZ21haWwuY29tIiwicm9sZSI6IlJPTEVfQ09VUExFIiwiaWF0IjoxNzQzNTk4NTUxLCJleHAiOjQ4Mzk5NTk4NTUxfQ.HAT3ySMyvOWwOkbHrs3gnDINrnGT-4GSdvSJwfnxMW8';
         const response = await fetch('http://localhost:8080/api/course-folder', {
           method: 'GET',

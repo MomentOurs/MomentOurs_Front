@@ -5,6 +5,7 @@ import { useNavigation, useRoute, RouteProp, CommonActions } from '@react-naviga
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import * as SecureStore from 'expo-secure-store';
 
 type CourseCreateScreenRouteProp = RouteProp<CourseStackParamList, 'CourseCreate'>;
 type NavigationProp = StackNavigationProp<CourseStackParamList, 'CourseCreate'>;
@@ -41,7 +42,7 @@ const CourseCreateScreen = () => {
     };
   
     try {
-      // const token = await SecureStore.getItemAsync('accessToken');
+      const token = await SecureStore.getItemAsync('accessToken');
       // const token = '(로그인 후 액세스 토큰 입력)';
       const response = await fetch('http://localhost:8080/api/course', {
         method: 'POST',

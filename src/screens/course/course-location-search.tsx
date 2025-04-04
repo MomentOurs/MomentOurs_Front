@@ -8,6 +8,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { NAVER_CLIENT_ID, NAVER_CLIENT_SECRET } from '@env';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from '../../screens/course/course-navigation';
+import * as SecureStore from 'expo-secure-store';
 
 type Location = {
     locationName: string;

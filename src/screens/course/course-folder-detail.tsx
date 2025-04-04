@@ -5,6 +5,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import CourseLayout from './course-layout';
 import CourseDeleteConfirmModal from '../../components/modals/course/CourseDeleteConfirmModal';
+import * as SecureStore from 'expo-secure-store';
 
 type Course = {
     courseId: number;
@@ -27,7 +28,7 @@ const CourseFolderDetail = () => {
     
     const fetchCourses = async () => {
         try {
-            // const token = await SecureStore.getItemAsync('accessToken');
+            const token = await SecureStore.getItemAsync('accessToken');
             // const token = '(로그인 후 액세스 토큰 입력)';
             const response = await fetch(`http://localhost:8080/api/course/folder/${folderId}`, {
                 method: 'GET',
