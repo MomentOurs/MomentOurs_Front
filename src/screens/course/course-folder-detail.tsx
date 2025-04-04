@@ -4,8 +4,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import CourseLayout from './course-layout';
-import DeleteFolderModal from '../../components/modals/course/DeleteFolderModal';
 import CourseDeleteConfirmModal from '../../components/modals/course/CourseDeleteConfirmModal';
+import * as SecureStore from 'expo-secure-store';
 
 type Course = {
     courseId: number;
@@ -19,34 +19,44 @@ const CourseFolderDetail = () => {
     const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
     const route = useRoute();
     const { folderId, folderTitle, folderDescription } = route.params as { folderId: number; folderTitle: string; folderDescription: string };
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const [courses, setCourses] = useState<Course[]>([
-        { courseId: 1, courseTitle: '2월 경주여행 (맛집 위주)', courseType: 'TRIP', courseStartDate: '2024-02-10', courseEndDate: '2024-02-12' },
-        { courseId: 2, courseTitle: '2월 경주여행 (볼거리 위주)', courseType: 'TRIP', courseStartDate: '2024-02-10', courseEndDate: '2024-02-12' },
-        { courseId: 3, courseTitle: '2월 경주여행 (최종)', courseType: 'TRIP', courseStartDate: '2024-02-10', courseEndDate: '2024-02-12' },
-    ]);
-    const [loading, setLoading] = useState(false); // API 없이 바로 표시하므로 false
-
-    // 아래 주석은 api 요청 시 주석 해제
-    // const [courses, setCourses] = useState<Course[]>([]);
-    // const [loading, setLoading] = useState(true);
-
-    // useEffect(() => {
-    //     fetchCourses();
-    // }, []);
-
-    // const fetchCourses = async () => {
-    //     try {
-    //         const response = await fetch(`http://localhost:8080/api/course/folder/${folderId}`);
-    //         if (!response.ok) throw new Error('Failed to fetch courses');
-    //         const data = await response.json();
-    //         setCourses(data);
-    //     } catch (error) {
-    //         console.error('Error fetching courses:', error);
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
+    useEffect(() => {
+        fetchCourses();
+    }, []);
+    
+    const fetchCourses = async () => {
+        try {
+            const token = await SecureStore.getItemAsync('accessToken');
+            // const token = '(로그인 후 액세스 토큰 입력)';
+            const response = await fetch(`http://localhost:8080/api/course/folder/${folderId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+    
+            if (!response.ok) throw new Error('Failed to fetch courses');
+            const data = await response.json();
+    
+            const mappedCourses = data.map((item: any) => ({
+                courseId: item.courseId,
+                courseTitle: item.courseTitle,
+                courseType: item.courseType,
+                courseStartDate: item.courseStartDate,
+                courseEndDate: item.courseEndDate,
+            }));
+          
+            setCourses(mappedCourses);
+        } catch (error) {
+            console.error('폴더 내 코스 조회 실패:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
 
     const [selectedTab, setSelectedTab] = useState('내 코스');
     const [isDeleteMode, setIsDeleteMode] = useState(false);
@@ -79,7 +89,10 @@ const CourseFolderDetail = () => {
     }
 
     return (
-        <CourseLayout>
+        <CourseLayout
+        selectedTab="내 코스"
+        onTabSelect={() => {}}
+        >
             <View style={styles.courseFolderHeader}>
                 <View>
                     <Text style={styles.courseFolderTitle}>{folderTitle}</Text>
@@ -160,11 +173,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 16,
+        padding: 8,
         borderBottomColor: '#ddd',
     },
     courseFolderTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#FF6F61',
     },
@@ -203,7 +216,7 @@ const styles = StyleSheet.create({
         padding: 14,
         borderRadius: 8,
         marginBottom: 10,
-        marginHorizontal: 16,
+        marginHorizontal: 8,
         shadowColor: '#000',
         shadowOpacity: 0.05,
         shadowOffset: { width: 0, height: 1 },
@@ -235,7 +248,7 @@ const styles = StyleSheet.create({
         marginLeft: 5,
     },
     courseTitle: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
     },
     courseType: {
