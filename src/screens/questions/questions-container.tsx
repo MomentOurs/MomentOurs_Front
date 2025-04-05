@@ -223,9 +223,24 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                 onDelete={handleDeleteAnswer} // 삭제 요청 함수 연결
             />
 
-            <TouchableOpacity style={styles.chatButton} onPress={() => navigation.navigate('QuestionComment', { userQuesId, questionId, questionText })}>
+            <TouchableOpacity
+                style={styles.commentButton}
+                onPress={() => {
+                    if (!myAnswer) {
+                        alert("답변을 먼저 입력해 주세요!");
+                        return;
+                    }
+
+                    navigation.navigate('QuestionComment', {
+                        userQuesId,
+                        questionId,
+                        questionText,
+                    });
+                }}
+            >
                 <Ionicons name="chatbubble-ellipses-outline" size={28} color="white" />
             </TouchableOpacity>
+
         </View>
     );
 };
@@ -333,7 +348,7 @@ const styles = StyleSheet.create({
         minHeight: 45,
         justifyContent: 'center',
     },
-    chatButton: {
+    commentButton: {
         position: 'absolute',
         bottom: 20,
         right: 20,

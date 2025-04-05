@@ -67,7 +67,7 @@ const QuestionCommentScreen = ({ navigation }: any) => {
             setInputText(""); // 입력 초기화
             fetchComments(); // 목록 갱신
         } catch (err) {
-            console.error("❌ 댓글 작성 실패", err);
+            console.error("댓글 작성 실패", err);
         }
     };
 
@@ -90,7 +90,7 @@ const QuestionCommentScreen = ({ navigation }: any) => {
             setShowDeleteMessage(true);
             setTimeout(() => setShowDeleteMessage(false), 1500);
         } catch (e) {
-            console.error("❌ 삭제 실패", e);
+            console.error("삭제 실패", e);
         } finally {
             setSelectedComment(null);
             setShowDeleteModal(false);
@@ -148,7 +148,7 @@ const QuestionCommentScreen = ({ navigation }: any) => {
                 </TouchableOpacity>
             </View>
 
-            {/* ✅ 액션시트 */}
+            {/* 액션시트 */}
             <Modal
                 visible={showActionSheet}
                 animationType="slide"
@@ -160,7 +160,6 @@ const QuestionCommentScreen = ({ navigation }: any) => {
                         <TouchableWithoutFeedback>
                             <View style={styles.actionSheet}>
                                 <TouchableOpacity onPress={() => {
-                                    console.log("✏️ 수정 기능 준비 중");
                                     setShowActionSheet(false);
                                 }}>
                                     <Text style={styles.actionText}>수정</Text>
@@ -180,14 +179,14 @@ const QuestionCommentScreen = ({ navigation }: any) => {
                 </TouchableWithoutFeedback>
             </Modal>
 
-            {/* ✅ 삭제 확인 모달 */}
+            {/* 삭제 확인 모달 */}
             <DeleteModal
                 isVisible={showDeleteModal}
                 onClose={() => setShowDeleteModal(false)}
                 onDelete={handleConfirmDelete}
             />
 
-            {/* ✅ 삭제 완료 메시지 */}
+            {/* 삭제 완료 메시지 */}
             {showDeleteMessage && (
                 <View style={styles.deleteMessage}>
                     <Text style={styles.deleteMessageText}>삭제되었습니다</Text>
