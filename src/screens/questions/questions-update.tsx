@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from "react-native";
 import { RouteProp, useNavigation } from "@react-navigation/native";
-import { updateAnswer } from "../../api/index"; // ✅ 수정 API 함수 (추가 필요)
+import { updateAnswer } from "../../api/index";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 
 type RootStackParamList = {
@@ -9,7 +9,7 @@ type RootStackParamList = {
         questionId: number;
         questionText: string;
         currentDate: string;
-        quesAnswerId: number;
+        myQuesAnsId: number;
         myAnswer: string;
     };
     RandomQuestions: undefined;
@@ -20,14 +20,14 @@ type Props = {
 };
 
 const QuestionsUpdateScreen: React.FC<Props> = ({ route }) => {
-    const { questionId, questionText, currentDate, quesAnswerId, myAnswer } = route.params;
+    const { questionId, questionText, currentDate, myQuesAnsId, myAnswer } = route.params;
 
-    const [answer, setAnswer] = useState(myAnswer); // ✅ 기존 답변 불러오기
+    const [answer, setAnswer] = useState(myAnswer);
     const [loading, setLoading] = useState(false);
 
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-    // 🔹 답변 수정 요청
+    // 답변 수정 요청
     const handleUpdateAnswer = async () => {
         if (!answer.trim()) {
             Alert.alert("알림", "답변을 입력해 주세요!");
@@ -37,9 +37,9 @@ const QuestionsUpdateScreen: React.FC<Props> = ({ route }) => {
         setLoading(true); // 로딩 시작
 
         try {
-            await updateAnswer(quesAnswerId, answer); // ✅ API 호출
+            await updateAnswer(myQuesAnsId, { quesAnsContent: answer }); 
             Alert.alert("성공", "답변이 수정되었습니다!", [
-                { text: "확인", onPress: () => navigation.navigate("RandomQuestions") }, // ✅ 성공하면 이동
+                { text: "확인", onPress: () => navigation.navigate("RandomQuestions") }, 
             ]);
         } catch (error) {
             Alert.alert("오류", "답변을 수정하는 중 문제가 발생했습니다.");

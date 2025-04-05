@@ -39,26 +39,52 @@ const RandomQuestionsStack = () => {
             }}
         >
             <Stack.Screen
-            name="RandomQuestions"
-            component={QuestionsScreen}
-            options={({ navigation }) => ({
-                title: '랜덤질문',
-                headerBackTitleVisible: false,
-                headerLeft: () => null,  
-                headerRight: () => (
-                <TouchableOpacity
-                    onPress={() => navigation.navigate('QuestionsList')}
-                    style={{ marginRight: 15 }}
-                >
-                    <Ionicons name="list" size={24} color="black" />
-                </TouchableOpacity>
-                ),
-            })}
+                name="RandomQuestions"
+                component={QuestionsScreen}
+                options={({ navigation }) => ({
+                    title: '랜덤질문',
+                    headerBackTitleVisible: false,
+                    headerLeft: () => null,
+                    headerRight: () => (
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate('QuestionsList')}
+                            style={{ marginRight: 15 }}
+                        >
+                            <Ionicons name="list" size={24} color="black" />
+                        </TouchableOpacity>
+                    ),
+                })}
             />
-            <Stack.Screen name="QuestionsRegister" component={QuestionsRegisterScreen} />
-            <Stack.Screen name="QuestionComment" component={QuestionCommentScreen} options={{ headerShown: false }}/>
+            <Stack.Screen name="QuestionsRegister" component={QuestionsRegisterScreen} 
+            options={({ navigation }) => ({
+                    title: '랜덤질문',
+                    headerBackTitleVisible: false,
+                    headerLeft: () => (
+                        <TouchableOpacity
+                            onPress={() => navigation.goBack()}
+                            style={{ paddingHorizontal: 16 }}
+                        >
+                            <Ionicons name="chevron-back" size={24} color="#000" />
+                        </TouchableOpacity>
+                    ),
+                    headerRight: () => null,
+                })} />
+            <Stack.Screen name="QuestionComment" component={QuestionCommentScreen} options={{ headerShown: false }} />
             <Stack.Screen name="QuestionsList" component={QuestionsListScreen} options={{ headerShown: false }} />
-            <Stack.Screen name="QuestionsUpdate" component={QuestionsUpdateScreen} />
+            <Stack.Screen name="QuestionsUpdate" component={QuestionsUpdateScreen}
+                options={({ navigation }) => ({
+                    title: '랜덤질문',
+                    headerBackTitleVisible: false,
+                    headerLeft: () => (
+                        <TouchableOpacity
+                            onPress={() => navigation.goBack()}
+                            style={{ paddingHorizontal: 16 }}
+                        >
+                            <Ionicons name="chevron-back" size={24} color="#000" />
+                        </TouchableOpacity>
+                    ),
+                    headerRight: () => null,
+                })} />
             <Stack.Screen name="QuestionsSearch" component={QuestionsSearchScreen} options={{ headerShown: false }} />
 
         </Stack.Navigator>

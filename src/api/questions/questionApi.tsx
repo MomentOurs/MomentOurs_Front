@@ -37,7 +37,7 @@ export const getRandomQuestionList = async (
             params: {
                 lastId: lastId ?? undefined,
                 size,
-                keyword: keyword ?? undefined, // 검색어가 있을 경우만 전달
+                keyword: keyword ?? undefined, 
             },
         });
 
