@@ -43,7 +43,7 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                 setQuestionId(questionData.data.coupleQuesNo);
                 setQuestionText(questionData.data.randomQuestion.quesContent);
                 setUserQuesId(questionData.data.userQuesId);
-    
+
                 const answerData = await getQuestionAnswers(questionData.data.userQuesId);
                 if (answerData.success && answerData.data) {
                     setMyAnswer(answerData.data.myAnswer || "이곳을 눌러서 답변을 입력해 주세요.");
@@ -52,29 +52,29 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                 }
             }
         } catch (error) {
-            console.error('❌ 질문 및 답변 불러오는 중 오류 발생:', error);
+            console.error('질문 및 답변 불러오는 중 오류 발생:', error);
         } finally {
             setLoading(false);
         }
     }, []);
 
-    // 🔹 답변 삭제 함수 (서버에도 삭제 요청)
+    // 답변 삭제 함수 (서버에도 삭제 요청)
     const handleDeleteAnswer = async () => {
         if (!questionId) return;
-    
+
         setIsDeleting(true);
         try {
             await deleteAnswer(questionId);
-    
-            // 👉 삭제 후 다시 데이터 새로 불러오기
+
+            // 삭제 후 다시 데이터 새로 불러오기
             await fetchQuestionAndAnswers();
-    
+
             setShowDeleteMessage(true);
             setTimeout(() => {
                 setShowDeleteMessage(false);
             }, 1000);
         } catch (error) {
-            console.error("❌ 답변 삭제 중 오류 발생:", error);
+            console.error("답변 삭제 중 오류 발생:", error);
         } finally {
             setIsDeleting(false);
             setModalVisible(false);
@@ -100,20 +100,20 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
 
                     const answerData = await getQuestionAnswers(questionData.data.userQuesId);
                     if (answerData.success && answerData.data) {
-                        setMyAnswer(answerData.data.myAnswer || "이곳을 눌러서 답변을 입력해 주세요.");
+                        setMyAnswer(answerData.data.myAnswer || null);
                         setOtherAnswer(answerData.data.otherAnswer || "상대방이 아직 답변하지 않았어요.");
                         setAnswerId(answerData.data.quesAnswerId);
                     }
                 }
             } catch (error) {
-                console.error('❌ 질문 및 답변 불러오는 중 오류 발생:', error);
+                console.error('질문 및 답변 불러오는 중 오류 발생:', error);
             } finally {
                 setLoading(false);
             }
         };
 
         fetchQuestionAndAnswers();
-    }, []);    
+    }, []);
 
     return (
         <View style={styles.container}>
@@ -139,47 +139,47 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                     <View style={styles.answerHeader}>
                         <Text style={styles.answerLabel}>나의 답변</Text>
 
-                        {/* ✏️ 수정 아이콘 */}
+                        {/* 수정 아이콘 */}
                         <TouchableOpacity
                             style={styles.iconButton}
                             onPress={() => {
-                                if (!myAnswer) return; // ✅ 답변이 없는 경우 수정 불가능
+                                if (!myAnswer) return; // 답변이 없는 경우 수정 불가능
                                 navigation.navigate('QuestionsUpdate', {
                                     questionId,
                                     questionText,
                                     currentDate,
                                     quesAnswerId,
-                                    myAnswer, // ✅ 현재 답변도 함께 전달
+                                    myAnswer, // 현재 답변도 함께 전달
                                 });
                             }}
                         >
                             <Image source={require('../../../assets/images/common/edit-icon.png')} style={styles.icon} />
                         </TouchableOpacity>
 
-                        {/* 🗑️ 삭제 아이콘 */}
+                        {/* 삭제 아이콘 */}
                         <TouchableOpacity
                             style={styles.iconButton}
                             onPress={() => setModalVisible(true)}
-                            disabled={isDeleting} // 🔹 삭제 중에는 버튼 비활성화
+                            disabled={isDeleting} // 삭제 중에는 버튼 비활성화
                         >
                             <Image source={require('../../../assets/images/common/trash-icon.png')} style={styles.icon} />
                         </TouchableOpacity>
                     </View>
 
                     <TouchableOpacity
-                        onPress={() =>
-                            myAnswer
-                                ? null // ✅ 답변이 이미 작성된 경우 아무 동작도 하지 않음
-                                : navigation.navigate('QuestionsRegister', {
+                        onPress={() => {
+                            if (!myAnswer || myAnswer.trim() === "") {
+                                navigation.navigate('QuestionsRegister', {
                                     questionId,
                                     questionText,
                                     currentDate,
                                     userQuesId,
-                                })
-                        }
+                                });
+                            }
+                        }}
                         activeOpacity={0.8}
-                        disabled={!!myAnswer} // ✅ myAnswer가 있으면 비활성화
-                        style={[styles.answerInputContainer, myAnswer && { opacity: 0.5 }]} // ✅ 시각적으로 흐리게 처리
+                        disabled={!!myAnswer && myAnswer.trim() !== ""}
+                        style={[styles.answerInputContainer, !!myAnswer && myAnswer.trim() !== "" && { opacity: 0.5 }]}
                     >
                         <TextInput
                             style={styles.answerInput}
@@ -190,12 +190,14 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                             textAlignVertical="top"
                             value={myAnswer || ""}
                             editable={false}
-                            pointerEvents="none" // ✅ 터치 이벤트 차단
+                            pointerEvents="none"
                         />
                     </TouchableOpacity>
+
+
                 </View>
 
-                {/* 🔹 상대방의 답변 필드 */}
+                {/* 상대방의 답변 필드 */}
                 <View style={styles.answerContainer}>
                     <Text style={styles.answerLabel}>상대방의 답변</Text>
                     <TextInput
@@ -208,7 +210,7 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
                 </View>
             </ScrollView>
 
-            {/* ✅ 삭제 완료 메시지 표시 */}
+            {/* 삭제 완료 메시지 표시 */}
             {showDeleteMessage && (
                 <View style={styles.deleteMessage}>
                     <Text style={styles.deleteMessageText}>삭제되었습니다</Text>
@@ -218,7 +220,7 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
             <DeleteModal
                 isVisible={isModalVisible}
                 onClose={() => setModalVisible(false)}
-                onDelete={handleDeleteAnswer} // ✅ 삭제 요청 함수 연결
+                onDelete={handleDeleteAnswer} // 삭제 요청 함수 연결
             />
 
             <TouchableOpacity style={styles.chatButton} onPress={() => navigation.navigate('QuestionComment', { userQuesId, questionId, questionText })}>
