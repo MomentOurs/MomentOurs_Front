@@ -1,15 +1,16 @@
+import React from 'react';
 import { Text, View } from 'react-native';
 
-const LoginScreen = () => {
+const HomeContainer = () => {
     return (
         <View style={{
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
         }}>
-            <Text>Login Screen</Text>
+            <Text>Home Tab</Text>
         </View>
     );
 }
 
-export default LoginScreen;
+export default HomeContainer;

@@ -1,15 +1,16 @@
+import React from 'react';
 import { Text, View } from 'react-native';
 
-const HomeContainer = () => {
+const CalendarContainer = () => {
     return (
         <View style={{
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
         }}>
-            <Text>Home Tab</Text>
+            <Text>Calendar Tab</Text>
         </View>
     );
 }
 
-export default HomeContainer;
+export default CalendarContainer;

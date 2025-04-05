@@ -1,15 +1,16 @@
+import React from 'react';
 import { Text, View } from 'react-native';
 
-const ClendarContainer = () => {
+const MapContainer = () => {
     return (
         <View style={{
             flex: 1,
             alignItems: 'center',
             justifyContent: 'center',
         }}>
-            <Text>Clendar Tab</Text>
+            <Text>Map Tab</Text>
         </View>
     );
 }
 
-export default ClendarContainer;
+export default MapContainer;
