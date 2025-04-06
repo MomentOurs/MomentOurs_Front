@@ -3,27 +3,28 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'reac
 import { StackScreenProps } from '@react-navigation/stack';
 import { CommonActions } from '@react-navigation/native';
 import { ResetPasswordStackParamList } from './resetPassword-navigator';
+import { Ionicons } from '@expo/vector-icons';
 import axios from 'axios';
 
-// props 타입 정의
 type ChangePasswordProps = StackScreenProps<ResetPasswordStackParamList, 'ChangePassword'>;
 
 const ChangePasswordScreen: React.FC<ChangePasswordProps> = ({ route, navigation }) => {
   const { email } = route.params;
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordMatch, setPasswordMatch] = useState<boolean | null>(null);
 
   const handleSubmit = async () => {
     if (password !== confirmPassword) {
       Alert.alert('비밀번호가 일치하지 않습니다.');
       return;
     }
-  
+
     if (password.length < 8) {
       Alert.alert('비밀번호는 최소 8자 이상이어야 합니다.');
       return;
     }
-  
+
     try {
       const response = await axios.put(
         'http://localhost:8080/api/member/password',
@@ -37,9 +38,9 @@ const ChangePasswordScreen: React.FC<ChangePasswordProps> = ({ route, navigation
           },
         }
       );
-  
+
       const data = response.data;
-  
+
       if (data.success) {
         Alert.alert('비밀번호 변경 완료', '다시 로그인 해주세요.');
         navigation.dispatch(
@@ -57,24 +58,53 @@ const ChangePasswordScreen: React.FC<ChangePasswordProps> = ({ route, navigation
     }
   };
 
+  const handleConfirmPasswordChange = (text: string) => {
+    setConfirmPassword(text);
+    setPasswordMatch(text === password);
+  };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>새 비밀번호 설정</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="새 비밀번호"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="비밀번호 확인"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
-      <TouchableOpacity style={styles.button} onPress={handleSubmit}>
+      <View style={styles.banner}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Ionicons name="chevron-back" size={24} color="black" />
+        </TouchableOpacity>
+        <Text style={styles.title}>비밀번호 재설정</Text>
+      </View>
+
+      <View style={styles.content}>
+        <Text style={styles.label}>새 비밀번호</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="8~16자의 영문, 숫자, 특수기호"
+          secureTextEntry
+          placeholderTextColor="#aaa"
+          value={password}
+          onChangeText={setPassword}
+        />
+
+        <Text style={styles.label}>비밀번호 확인</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="8~16자의 영문, 숫자, 특수기호"
+          secureTextEntry
+          placeholderTextColor="#aaa"
+          value={confirmPassword}
+          onChangeText={handleConfirmPasswordChange}
+        />
+
+        {passwordMatch !== null && (
+          <Text style={{ color: passwordMatch ? 'green' : 'red', marginBottom: 20 }}>
+            {passwordMatch ? '비밀번호가 일치합니다.' : '비밀번호가 일치하지 않습니다.'}
+          </Text>
+        )}
+      </View>
+
+      <TouchableOpacity
+        style={[styles.button, (!password || !passwordMatch) && styles.disabledButton]}
+        onPress={handleSubmit}
+        disabled={!password || !passwordMatch}
+      >
         <Text style={styles.buttonText}>비밀번호 변경</Text>
       </TouchableOpacity>
     </View>
@@ -84,35 +114,56 @@ const ChangePasswordScreen: React.FC<ChangePasswordProps> = ({ route, navigation
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
+    backgroundColor: '#FFF',
+    paddingHorizontal: 20,
   },
+  banner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingBottom: 10,
+  },
+  backButton: {},
   title: {
-    fontSize: 22,
+    flex: 1,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 30,
     textAlign: 'center',
+    transform: [{ translateX: -10 }],
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    marginTop: 30,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 5,
   },
   input: {
     height: 50,
-    borderColor: '#ccc',
-    borderWidth: 1,
+    backgroundColor: '#F5F5F5',
     borderRadius: 8,
     paddingHorizontal: 15,
-    marginBottom: 20,
+    marginBottom: 30,
   },
   button: {
+    width: '100%',
     height: 50,
     backgroundColor: '#FF9999',
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: 8,
+    marginBottom: 30,
   },
   buttonText: {
-    color: '#fff',
+    color: 'white',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  disabledButton: {
+    backgroundColor: '#ccc',
   },
 });
 

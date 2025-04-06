@@ -1,125 +1,3 @@
-// import React, { useState } from 'react';
-// import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
-// import { Ionicons } from '@expo/vector-icons';
-// import { StackScreenProps } from '@react-navigation/stack';
-// import { ResetPasswordStackParamList } from './resetPassword-Navigator';
-
-// type VerifyPasswordProps = StackScreenProps<ResetPasswordStackParamList, 'VerifyPassword'>;
-
-// const VerifyPasswordScreen: React.FC<VerifyPasswordProps> = ({ route, navigation }) => {
-//   const { email } = route.params;
-//   const [code, setCode] = useState('');
-
-//   const handleVerify = () => {
-//     if (code.trim().length < 4) {
-//       Alert.alert('인증 실패', '인증 코드를 정확히 입력해 주세요.');
-//       return;
-//     }
-
-//     // TODO: 백엔드 검증 요청
-//     navigation.navigate('ChangePassword', { email });
-//   };
-
-//   return (
-//     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.container}>
-//       <View style={styles.banner}>
-//         <TouchableOpacity onPress={() => navigation.goBack()}>
-//           <Ionicons name="chevron-back" size={24} color="black" />
-//         </TouchableOpacity>
-//         <Text style={styles.title}>인증 번호 입력</Text>
-//       </View>
-
-//       <Text style={styles.subtitle}>회원님의 이메일로 인증 번호가 발송되었어요</Text>
-//       <TextInput
-//         style={styles.codeInput}
-//         keyboardType="number-pad"
-//         maxLength={4}
-//         value={code}
-//         onChangeText={setCode}
-//         placeholder="0000"
-//         textAlign="center"
-//       />
-
-//       <TouchableOpacity style={styles.resendButton}>
-//         <Text style={styles.resendText}>인증번호 재전송</Text>
-//       </TouchableOpacity>
-
-//       <TouchableOpacity style={styles.button} onPress={handleVerify}>
-//         <Text style={styles.buttonText}>확인</Text>
-//       </TouchableOpacity>
-//     </KeyboardAvoidingView>
-//   );
-// };
-
-// const styles = StyleSheet.create({
-//     container: {
-//       flex: 1,
-//       backgroundColor: '#FFF',
-//       paddingHorizontal: 20,
-//       paddingTop: 60,
-//     },
-//     banner: {
-//       flexDirection: 'row',
-//       alignItems: 'center',
-//       marginBottom: 20,
-//     },
-//     title: {
-//       flex: 1,
-//       fontSize: 20,
-//       fontWeight: 'bold',
-//       textAlign: 'center',
-//       transform: [{ translateX: -10 }],
-//     },
-//     subtitle: {
-//       fontSize: 14,
-//       color: '#666',
-//       marginBottom: 30,
-//       textAlign: 'center',
-//     },
-//     label: {
-//       fontSize: 14,
-//       fontWeight: 'bold',
-//       marginBottom: 8,
-//     },
-//     input: {
-//       height: 50,
-//       backgroundColor: '#F5F5F5',
-//       borderRadius: 8,
-//       paddingHorizontal: 15,
-//       marginBottom: 20,
-//     },
-//     codeInput: {
-//       height: 60,
-//       backgroundColor: '#F5F5F5',
-//       borderRadius: 8,
-//       fontSize: 32,
-//       letterSpacing: 20,
-//       marginBottom: 20,
-//     },
-//     resendButton: {
-//       marginBottom: 20,
-//     },
-//     resendText: {
-//       color: '#999',
-//       textAlign: 'center',
-//     },
-//     button: {
-//       width: '100%',
-//       height: 50,
-//       backgroundColor: '#FF9999',
-//       justifyContent: 'center',
-//       alignItems: 'center',
-//       borderRadius: 8,
-//     },
-//     buttonText: {
-//       color: 'white',
-//       fontSize: 16,
-//       fontWeight: 'bold',
-//     },
-//   });
-
-// export default VerifyPasswordScreen;
-
 import React, { useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -153,16 +31,23 @@ const VerifyPasswordScreen: React.FC<VerifyPasswordProps> = ({ route, navigation
     }
   };
 
-  // const handleVerify = () => {
-  //   const joinedCode = code.join('');
-  //   if (joinedCode.length !== 4) {
-  //     Alert.alert('인증 실패', '인증 코드를 정확히 입력해 주세요.');
-  //     return;
-  //   }
+  const handleResendCode = async () => {
+    try {
+      const response = await axios.post('http://localhost:8080/api/member/email/send', {
+        member_email: email,
+      });
+  
+      if (response.data.success) {
+        Alert.alert('재전송 완료', '인증번호를 다시 이메일로 보냈어요.');
+      } else {
+        Alert.alert('실패', response.data.message || '인증번호 재전송에 실패했어요.');
+      }
+    } catch (error) {
+      console.error('재전송 에러:', error);
+      Alert.alert('에러', '문제가 발생했어요.');
+    }
+  };
 
-  //   // TODO: 백엔드 인증 코드 검증
-  //   navigation.navigate('ChangePassword', { email });
-  // };
   const handleVerify = async () => {
     const joinedCode = code.join('');
     if (joinedCode.length !== 4) {
@@ -218,7 +103,7 @@ const VerifyPasswordScreen: React.FC<VerifyPasswordProps> = ({ route, navigation
         ))}
       </View>
 
-      <TouchableOpacity style={styles.resendButton}>
+      <TouchableOpacity style={styles.resendButton} onPress={handleResendCode}>
         <Text style={styles.resendText}>인증번호 재전송</Text>
       </TouchableOpacity>
 

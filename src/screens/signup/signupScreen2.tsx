@@ -6,29 +6,6 @@ import { SignUpStackParamList } from '../../components/types/signup/signuptypes'
 import { RouteProp } from '@react-navigation/native';
 import axios from 'axios'; 
 
-// Stack Navigator의 타입 정의
-// type SignUpStackParamList = {
-//     SignUp1: undefined;
-//     SignUp2: { email: string; password: string };
-//     SignUp3: {
-//       email: string;
-//       password: string;
-//       name: string;
-//       nickname: string;
-//     };
-//     VerifyEmail: {
-//       email: string;
-//       password: string;
-//       name: string;
-//       nickname: string;
-//       birthDate: string;
-//       selectedGender: string;
-//       mbti: string;
-//     };
-//     LoginScreen: undefined;
-//   };
-  
-
 // navigation의 타입 정의
 type SignUpScreen2NavigationProp = StackNavigationProp<SignUpStackParamList, 'SignUp2'>;
 type SignUpScreen2RouteProp = RouteProp<SignUpStackParamList, 'SignUp2'>;

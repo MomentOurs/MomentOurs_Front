@@ -37,6 +37,23 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ route, navigation
         }
       };
 
+    const handleResendCode = async () => {
+      try {
+        const response = await axios.post('http://localhost:8080/api/member/email/send', {
+          member_email: email,
+        });
+      
+        if (response.data.success) {
+          Alert.alert('재전송 완료', '이메일로 인증번호를 다시 보냈어요!');
+        } else {
+          Alert.alert('실패', response.data.message || '인증번호 재전송에 실패했어요.');
+        }
+        } catch (error) {
+          console.error('인증번호 재전송 에러:', error);
+          Alert.alert('에러', '문제가 발생했어요.');
+        }
+      };
+
     const handleVerify = async () => {
         const joinedCode = code.join('');
         if (joinedCode.length !== 4) {
@@ -69,7 +86,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ route, navigation
             });
     
             if (signupResponse.data.success) {
-                Alert.alert('🎉 회원가입 성공!', '이제 로그인 해주세요.');
+                Alert.alert('회원가입 성공!', '이제 로그인 해주세요.');
                 navigation.navigate('LoginScreen');
             } else {
                 Alert.alert('회원가입 실패', signupResponse.data.message || '에러가 발생했습니다.');
@@ -111,7 +128,7 @@ const VerifyEmailScreen: React.FC<VerifyEmailScreenProps> = ({ route, navigation
             ))}
           </View>
     
-          <TouchableOpacity style={styles.resendButton}>
+          <TouchableOpacity style={styles.resendButton} onPress={handleResendCode}>
             <Text style={styles.resendText}>인증번호 재전송</Text>
           </TouchableOpacity>
     

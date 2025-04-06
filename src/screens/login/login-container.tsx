@@ -58,7 +58,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ setIsLoggedIn }) => {
             await AsyncStorage.setItem('accessToken', accessToken); // JWT 저장
             await AsyncStorage.setItem('refreshToken', refreshToken);
 
-             // 자동로그인 추가
+            //  자동로그인 추가
             if (isRemembered) {
                 await AsyncStorage.setItem('isLoggedIn', 'true');
             } else {
@@ -66,6 +66,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ setIsLoggedIn }) => {
             }
   
             setIsLoggedIn(true); // 로그인 상태 변경
+            // await AsyncStorage.removeItem('isLoggedIn');        // 개발용 코드
     
         } catch (error: unknown) { // unknown 타입을 처리
             if (axios.isAxiosError(error)) {  // AxiosError 여부 확인
@@ -103,9 +104,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ setIsLoggedIn }) => {
                 style={styles.input} 
                 autoCapitalize="none" // 첫 글자 대문자 방지
             />
-            {/* <TouchableOpacity>
-                <Text style={styles.loginRemember}>로그인 유지</Text>
-            </TouchableOpacity> */}
             <TouchableOpacity style={styles.checkboxContainer} onPress={toggleRememberMe}>
                 <View style={[styles.checkbox, { backgroundColor: isRemembered ? "black" : "white", borderColor: isRemembered ? "black" : "gray" }]}>
                     {isRemembered && <Ionicons name="checkmark" size={14} color="white" />}
@@ -131,8 +129,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ setIsLoggedIn }) => {
                 </TouchableOpacity> */}
                 
                 <TouchableOpacity onPress={() => navigation.navigate('ResetPasswordNavigator')}>
-  <Text style={styles.linkText}>비밀번호 찾기</Text>
-</TouchableOpacity>
+                    <Text style={styles.linkText}>비밀번호 찾기</Text>
+                </TouchableOpacity>
             </View>
             <View style={styles.dividerContainer}>
                 <View style={styles.line} />

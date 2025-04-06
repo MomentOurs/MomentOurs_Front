@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StackScreenProps } from '@react-navigation/stack';
-// import ResetPasswordNavigator from './resetPassword-Navigator';
-// import { ResetPasswordStackParamList } from './resetPassword-Navigator';
 import { CommonActions } from '@react-navigation/native';
 import axios from 'axios';
 
