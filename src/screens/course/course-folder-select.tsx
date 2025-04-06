@@ -50,7 +50,7 @@ const CourseFolderSelectScreen = () => {
   useEffect(() => {
     const fetchFolders = async () => {
       try {
-        const token = await SecureStore.getItemAsync('accessToken');
+        // const token = await SecureStore.getItemAsync('accessToken');
         const token = 'eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXJFbWFpbCI6ImNobzk3NTlAZ21haWwuY29tIiwicm9sZSI6IlJPTEVfQ09VUExFIiwiaWF0IjoxNzQzNTk4NTUxLCJleHAiOjQ4Mzk5NTk4NTUxfQ.HAT3ySMyvOWwOkbHrs3gnDINrnGT-4GSdvSJwfnxMW8';
         const response = await fetch('http://localhost:8080/api/course-folder', {
           method: 'GET',
@@ -87,6 +87,7 @@ const CourseFolderSelectScreen = () => {
       try {
         // const token = await SecureStore.getItemAsync('accessToken');
         // const token = '(로그인 후 액세스 토큰 입력)';
+        const token = 'eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXJFbWFpbCI6ImNobzk3NTlAZ21haWwuY29tIiwicm9sZSI6IlJPTEVfQ09VUExFIiwiaWF0IjoxNzQzNTk4NTUxLCJleHAiOjQ4Mzk5NTk4NTUxfQ.HAT3ySMyvOWwOkbHrs3gnDINrnGT-4GSdvSJwfnxMW8';
         const payload = {
           folder_name: newFolderTitle,
           folder_description: newFolderDescription, // optional
