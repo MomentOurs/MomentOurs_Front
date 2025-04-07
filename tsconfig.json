@@ -12,5 +12,5 @@
     "moduleResolution": "node",
     "types": ["@types/react", "@types/react-native", "@env"]
   },
-  "include": ["env.d.ts"]
+  "include": ["env.d.ts", "src"]
 }
