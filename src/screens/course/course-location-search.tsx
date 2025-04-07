@@ -6,6 +6,9 @@ import CourseLayout from './course-layout';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import { NAVER_CLIENT_ID, NAVER_CLIENT_SECRET } from '@env';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { CourseStackParamList } from '../../screens/course/course-navigation';
+import * as SecureStore from 'expo-secure-store';
 
 type Location = {
     locationName: string;
@@ -23,7 +26,7 @@ const dummyLocations: Location[] = [
 ];
 
 const CourseLocationSearch = () => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
     const [searchQuery, setSearchQuery] = useState('');
     const [dbSuggestions, setDbSuggestions] = useState<Location[]>([]);
     const [naverResults, setNaverResults] = useState<Location[]>([]);
@@ -32,6 +35,7 @@ const CourseLocationSearch = () => {
     const [searchCache, setSearchCache] = useState<{ [key: string]: Location[] }>({});
     const [loading, setLoading] = useState(false);
     const [recommendedLocations, setRecommendedLocations] = useState<Location[]>(dummyLocations);
+    const [selectedTab, setSelectedTab] = useState('내 코스');
 
     useEffect(() => {
         loadRecentSearches();
@@ -185,7 +189,10 @@ const CourseLocationSearch = () => {
     };
 
     return (
-        <CourseLayout>
+        <CourseLayout
+        selectedTab="내 코스"
+        onTabSelect={() => {}}
+        >
             <View style={styles.searchContainer}>
                 <TextInput
                     style={styles.searchInput}
