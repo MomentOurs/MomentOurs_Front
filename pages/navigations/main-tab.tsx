@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import CalendarScreen from '../calendar';
-import QuestionsScreen from '../questions';
+import QuestionsScreen from '../questions/index';
 import HomeScreen from '../home';
 import CourseNavigator from '../../src/screens/course/course-navigation';
 import MapScreen from '../map';
@@ -11,13 +11,13 @@ const Tab = createBottomTabNavigator();
 const MainTabsNavigator = () => {
     return (
         <Tab.Navigator initialRouteName="Home">
-            <Tab.Screen name="Questions" component={QuestionsScreen} />
+            <Tab.Screen name="랜덤질문" component={QuestionsScreen} options={{ headerShown: false }}/>
             <Tab.Screen name="Map" component={MapScreen} />
             <Tab.Screen name="Home" component={HomeScreen} />
             <Tab.Screen name="Calendar" component={CalendarScreen} />
             <Tab.Screen name="Course" component={CourseNavigator} options={{ headerShown: false }}/> 
         </Tab.Navigator>
-    )
-}
+    );
+};
 
 export default MainTabsNavigator;
