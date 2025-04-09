@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     tabItem: {
         flex: 1,
         alignItems: 'center',
-        paddingVertical: 8,
+        paddingVertical: 12,
         borderBottomWidth: 2,
         borderBottomColor: 'transparent',
     },
