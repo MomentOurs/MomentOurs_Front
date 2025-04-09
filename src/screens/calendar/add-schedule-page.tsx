@@ -1,0 +1,295 @@
+import React, { useState, useEffect } from 'react';
+import {Text, TextInput, View, StyleSheet, TouchableOpacity} from 'react-native';
+import Feather from '@expo/vector-icons/Feather';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import Octicons from '@expo/vector-icons/Octicons';
+// import AlarmSetModal from './alarm-set-modal';
+// import DatePickerModal from './date-picker-modal';
+import { StackScreenProps } from '@react-navigation/stack';
+import { CalendarStackParamList } from './calendar-container';
+
+type AddSchedulePageProps = StackScreenProps<CalendarStackParamList, 'Add'>;
+
+const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) => {
+    const [alarmModalVisible, setAlarmModalVisible] = useState<boolean>(false);
+    const [dateModalVisible, setDateModalVisible] = useState<boolean>(false);
+
+    const { editMode = false, planId = 0 } = route.params || {};
+    const [title, setTitle] = useState<string>('');
+    const [memo, setMemo] = useState<string>('');
+    const [place, setPlace] = useState<string>('');
+    const [reminderDateTime, setReminderDateTime] = useState<string | null>(null);
+    const [category, setCategory] = useState<'couple' | 'personal'>('couple');
+    const [allDay, setAllDay] = useState<boolean>(false);
+    const [startDate, setStartDate] = useState<string | undefined>();
+    const [endDate, setEndDate] = useState<string | undefined>();
+
+    const getScheduleInfoAPI = async () => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/plan/${planId}`);
+            if (!response.ok) throw new Error('Failed to fetch schedule');
+            const data = await response.json();
+            setTitle(data.planTitle);
+            setMemo(data.planContent);
+            setStartDate(data.planStartDate);
+            setEndDate(data.planEndDate);
+        } catch (error) {
+            console.error('Error fetching schedule:', error);
+        }
+    };
+
+    // 삭제 api
+    // const deleteScheduleAPI = async () => {
+    //     try {
+    //         const response = await fetch(`http://localhost:8080/api/plan/deactivate/${planId}`, {
+    //             method: 'PATCH',
+    //         });
+    //         if (!response.ok) throw new Error('Failed to delete schedule');
+    //     } catch (error) {
+    //         console.error('Error deleting schedule:', error);
+    //     }
+    // };
+
+    const postScheduleAPI = async () => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/plan`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    planId,
+                    planTitle: title,
+                    planContent: memo,
+                    planStartDate: startDate,
+                    planEndDate: endDate,
+                    planReminderDatetime: reminderDateTime,
+                }),
+            });
+            if (!response.ok) throw new Error('Failed to create schedule');
+        } catch (error) {
+            console.error('Error posting schedule:', error);
+        }
+    };
+
+    const editScheduleAPI = async () => {
+        try {
+            const response = await fetch(`http://localhost:8080/api/plan`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    planId,
+                    planTitle: title,
+                    planContent: memo,
+                    planStartDate: startDate,
+                    planEndDate: endDate,
+                    planReminderDatetime: reminderDateTime,
+                }),
+            });
+            if (!response.ok) throw new Error('Failed to update schedule');
+        } catch (error) {
+            console.error('Error editing schedule:', error);
+        }
+    };
+
+    useEffect(() => {
+        if (editMode) {
+            getScheduleInfoAPI();
+        }
+    }, [editMode]);
+
+    const changeCategory = () => {
+        setCategory(prev => (prev === 'couple' ? 'personal' : 'couple'));
+    };
+
+    const changeAllDay = () => {
+        setAllDay(!allDay);
+    };
+
+    const uploadSchedule = () => {
+        editMode ? editScheduleAPI() : postScheduleAPI();
+    };
+
+    return (
+        <View style={styles.container}>
+            <View style={{ flex: 1 }}>
+                <TextInput
+                    style={styles.inputContainer}
+                    value={title}
+                    onChangeText={setTitle}
+                    placeholder="제목"
+                />
+
+                {/* 날짜 & 시간 */}
+                <View style={styles.inputContainer}>
+                    <View style={{ flexDirection: 'column' }}>
+                        <View style={{ ...styles.multiContainer, justifyContent: 'space-between' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Feather style={texts.marginR} name="clock" size={24} color="#FF8A8A" />
+                                <Text style={allDay ? texts.black : texts.grey2}>종일</Text>
+                            </View>
+                            <TouchableOpacity onPress={changeAllDay}>
+                                <MaterialIcons
+                                    name={allDay ? 'toggle-on' : 'toggle-off'}
+                                    size={24}
+                                    color="#FF8A8A"
+                                />
+                            </TouchableOpacity>
+                        </View>
+
+                        <TouchableOpacity
+                            style={styles.multiContainer}
+                            onPress={() => setDateModalVisible(true)}
+                        >
+                            <MaterialIcons style={texts.marginR} name="keyboard-arrow-right" size={24} color="#FF8A8A" />
+                            <Text style={{ fontSize: 18, ...texts.grey3, ...texts.marginR }}>2025년 3월 12일(수)</Text>
+                            <Text style={allDay ? texts.unactivateTime : texts.activateTime}>1:00PM</Text>
+                        </TouchableOpacity>
+
+                        <View style={styles.multiContainer}>
+                            <MaterialIcons style={texts.marginR} name="keyboard-arrow-left" size={24} color="#FF8A8A" />
+                            <Text style={{ fontSize: 18, ...texts.grey3, ...texts.marginR }}>2025년 3월 12일(수)</Text>
+                            <Text style={allDay ? texts.unactivateTime : texts.activateTime}>1:00PM</Text>
+                        </View>
+                    </View>
+                </View>
+
+                {/* 메모 */}
+                <View style={styles.inputContainer}>
+                    <View style={styles.multiContainer}>
+                        <MaterialCommunityIcons style={texts.marginR} name="note-text-outline" size={24} color="#FF8A8A" />
+                        <TextInput
+                            style={{ fontSize: 18 }}
+                            value={memo}
+                            onChangeText={setMemo}
+                            placeholder="메모를 입력해 주세요"
+                        />
+                    </View>
+                </View>
+
+                {/* 알람 */}
+                <View style={styles.inputContainer}>
+                    <TouchableOpacity
+                        style={styles.multiContainer}
+                        onPress={() => setAlarmModalVisible(true)}
+                    >
+                        <Ionicons style={texts.marginR} name="alarm-outline" size={24} color="#FF8A8A" />
+                        <Text style={{ fontSize: 18 }}>알람 없음</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* 위치 */}
+                <View style={styles.inputContainer}>
+                    <View style={styles.multiContainer}>
+                        <Feather style={texts.marginR} name="map-pin" size={24} color="#FF8A8A" />
+                        <TextInput
+                            style={{ fontSize: 18 }}
+                            value={place}
+                            onChangeText={setPlace}
+                            placeholder="위치 등록"
+                        />
+                    </View>
+                </View>
+
+                {/* 카테고리 */}
+                <View style={styles.inputContainer}>
+                    <View style={{ ...styles.multiContainer, justifyContent: 'space-between' }}>
+                        <View style={{ flexDirection: 'row' }}>
+                            <Octicons style={texts.marginR} name="person" size={24} color="#FF8A8A" />
+                            <Text style={{ fontSize: 18 }}>{category === 'couple' ? '커플' : '개인'}</Text>
+                        </View>
+                        <TouchableOpacity onPress={changeCategory}>
+                            <MaterialIcons
+                                name={category === 'couple' ? 'toggle-on' : 'toggle-off'}
+                                size={24}
+                                color="#FF8A8A"
+                            />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+
+            {/* 하단 버튼 */}
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>
+                    <Text>취소</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.confirmBtn} onPress={uploadSchedule}>
+                    <Text>확인</Text>
+                </TouchableOpacity>
+            </View>
+
+            {/* 모달 
+            <DatePickerModal
+                modalVisible={dateModalVisible}
+                setModalVisible={setDateModalVisible}
+            />
+            <AlarmSetModal
+                modalVisible={alarmModalVisible}
+                setModalVisible={setAlarmModalVisible}
+            />
+            */}
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        paddingHorizontal: 20,
+        paddingVertical: 20,
+        backgroundColor: '#FAFAFA',
+    },
+    inputContainer: {
+        padding: 20,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 10,
+        marginBottom: 15,
+        fontSize: 18,
+    },
+    multiContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    confirmBtn: {
+        backgroundColor: '#FF8A8A',
+        color: '#ffffff',
+        borderRadius: 10,
+        paddingHorizontal: 75,
+        paddingVertical: 15
+    },
+    cancelBtn: {
+        backgroundColor: '#F4F4F4',
+        color: '#000000',
+        borderRadius: 10,
+        paddingHorizontal: 75,
+        paddingVertical: 15
+    },
+});
+
+const texts = StyleSheet.create({
+    grey2: {
+        color: '#D9D9D9',
+    },
+    grey3: {
+        color: '#7B7B7B',
+    },
+    marginR: {
+        marginRight: 15
+    },
+    black: {
+        color: '#000000'
+    },
+    activateTime: {
+        fontSize: 18,
+        color: '#7B7B7B',
+        marginRight: 15
+    },
+    unactivateTime: {
+        fontSize: 18,
+        color: '#D9D9D9',
+        marginRight: 15
+    }
+});
+
+export default AddSchedulePage;
