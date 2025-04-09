@@ -5,7 +5,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from '../../src/screens/course/course-navigation';
 import { useNavigation } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Course = {
   id: number;
@@ -13,17 +13,19 @@ type Course = {
   courseType: 'DATE' | 'TRIP';
   likes: number;
   views: number;
+  courseStartDate: string;
+  courseEndDate: string;
 };
 
 type ResponseDateCourseListVO = {
-  course_id: number;
-  course_title: string;
-  course_type: 'DATE' | 'TRIP';
-  course_like: number;
-  course_view: number;
-  course_start_date: string;
-  course_end_date: string;
-  member_id: number;
+  courseId: number;
+  courseTitle: string;
+  courseType: 'DATE' | 'TRIP';
+  courseLike: number;
+  courseView: number;
+  courseStartDate: string;
+  courseEndDate: string;
+  memberId: number;
 };
 
 const DateCourseTab = () => {
@@ -47,9 +49,7 @@ const DateCourseTab = () => {
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const token = await SecureStore.getItemAsync('accessToken');
-        // const token = '(로그인 후 액세스 토큰 입력)';
-  
+        const token = await AsyncStorage.getItem('accessToken');
         const response = await fetch(`http://localhost:8080/api/course?sortBy=${sortBy}`, {
           method: 'GET',
           headers: {
@@ -65,11 +65,13 @@ const DateCourseTab = () => {
         const data: ResponseDateCourseListVO[] = await response.json();
 
         const mapped = data.map((item) => ({
-          id: item.course_id,
-          title: item.course_title,
-          courseType: item.course_type,
-          likes: item.course_like,
-          views: item.course_view,
+          id: item.courseId,
+          title: item.courseTitle,
+          courseType: item.courseType,
+          likes: item.courseLike,
+          views: item.courseView,
+          courseStartDate: item.courseStartDate,
+          courseEndDate: item.courseEndDate,
         }));
   
         setCourses(mapped);
@@ -90,15 +92,16 @@ const DateCourseTab = () => {
   
     return (
       <TouchableOpacity
-        onPress={() =>
-          navigation.navigate('OtherCourseDetail', {
-            courseId: item.id,
-            courseTitle: item.title,
-            courseType: item.courseType,
-            courseStartDate: '2025-04-01', // TODO: 실제 데이터로 바꾸기
-            courseEndDate: '2025-04-01',
-          })
-        }
+      onPress={() =>
+        navigation.navigate('OtherCourseDetail', {
+          courseId: item.id,
+          courseTitle: item.title,
+          courseType: item.courseType,
+          courseStartDate: item.courseStartDate,
+          courseEndDate: item.courseEndDate,
+        })
+      }
+      
       >
         <View style={styles.itemContainer}>
           <View style={styles.titleRow}>
