@@ -5,9 +5,10 @@ import { NaverMapView, NaverMapMarkerOverlay } from '@mj-studio/react-native-nav
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import CourseLayout from './course-layout';
+import { format, parseISO } from 'date-fns';
 import CourseLocationDeleteModal from '../../components/modals/course/CourseLocationDeleteModal';
 import { NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, NAVER_BASE_URL } from '@env';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type DateCourseLocation = {
     locationId: number;
@@ -47,9 +48,7 @@ const CourseDetail = () => {
       
     const fetchCourseDetail = async () => {
         try {
-            setLoading(true);
-            const token = await SecureStore.getItemAsync('accessToken');
-            // const token = '(로그인 후 액세스 토큰 입력)';
+            const token = await AsyncStorage.getItem('accessToken');
             const response = await fetch(`http://localhost:8080/api/course/${courseId}`, {
             headers: {
               'Content-Type': 'application/json',
@@ -72,7 +71,6 @@ const CourseDetail = () => {
 
     const fetchNaverMapData = async () => {
         try {
-            setLoading(true);
             const response = await fetch(`${NAVER_BASE_URL}/map-reversegeocode/v2/gc?coords=129.2043,35.8344&orders=addr&output=json`, {
                 method: 'GET',
                 headers: {
@@ -148,8 +146,8 @@ const CourseDetail = () => {
             <View style={styles.courseHeader}>
                 <View>
                     <Text style={styles.courseTitle}>{courseTitle}</Text>
-                    <Text style={styles.courseDate}>
-                        {courseStartDate?.substring(0, 10)} ~ {courseEndDate?.substring(0, 10)}
+                    <Text style={styles.date}>
+                        {format(parseISO(courseStartDate), 'yyyy.MM.dd')} ~ {format(parseISO(courseEndDate), 'yyyy.MM.dd')}
                     </Text>
                 </View>
                 <TouchableOpacity style={styles.mapButton} onPress={toggleMapView}>
@@ -258,7 +256,7 @@ const CourseDetail = () => {
                 selectedCount={selectedLocations.length}
                 onClose={() => setShowDeleteModal(false)}
                 onConfirm={confirmDelete}
-            /> */}
+            />
         </CourseLayout>
     );
 };
@@ -267,20 +265,20 @@ const styles = StyleSheet.create({
     centeredContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     courseHeader: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 16, paddingLeft: 12, paddingRight: 12 },
     courseTitle: { fontSize: 16, fontWeight: 'bold', color: '#FF6F61', marginRight: 20 },
-    courseDate: { fontSize: 12, color: '#666' },
+    date: { fontSize: 12, color: '#666' },
     deleteButton: {flexDirection: 'row',alignItems: 'center',backgroundColor: '#fff',paddingVertical: 8,paddingHorizontal: 8,borderRadius: 8, borderWidth: 1,borderColor: '#E0E0E0',elevation: 3,},
     deleteIcon: { width: 14, height: 14, marginRight: 6, tintColor: '#888' },
     deleteButtonText: { fontSize: 12, color: '#888' },
-    mapContainer: { width: '100%', height: 250,overflow: 'hidden', backgroundColor: 'white', paddingTop: 10 },
-    mapButton: {backgroundColor: '#FF6F61',paddingVertical: 9.5, paddingHorizontal: 8, borderRadius: 8, alignSelf: 'center',},
+    mapContainer: { width: '100%', height: 250, overflow: 'hidden', backgroundColor: 'white', paddingTop: 10 },
+    mapButton: {backgroundColor: '#FF6F61',paddingVertical: 9.5, paddingHorizontal: 8, borderRadius: 8, alignSelf: 'center', marginLeft: 30},
     mapButtonText: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
     closeMapButton: {backgroundColor: '#FF6F61',paddingVertical: 10, paddingHorizontal: 8, borderRadius: 8, alignSelf: 'center',},
     closeMapButtonText: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
     locationItem: { padding: 14, borderBottomWidth: 1, borderBottomColor: '#ddd' },
     locationRow: {flexDirection: 'row',alignItems: 'center',},
     locationTextContainer: { flex: 1, marginHorizontal: 10, },
-    locationName: { fontSize: 16, fontWeight: 'bold' },
-    locationAddress: { fontSize: 12, color: '#666' },
+    locationName: { fontSize: 16, fontWeight: 'bold', marginBottom: 3, },
+    locationAddress: { fontSize: 12, color: '#666', marginBottom: 3, },
     memoryButton: {backgroundColor: '#FFF0F0',borderRadius: 12,paddingVertical: 6,paddingHorizontal: 10,marginLeft: 10,},
     memoryButtonText: {color: '#FF6F61',fontWeight: 'bold',fontSize: 12,},
     courseMemo: { fontSize: 12, color: '#888', fontStyle: 'italic' },
