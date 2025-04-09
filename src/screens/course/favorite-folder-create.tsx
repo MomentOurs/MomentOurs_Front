@@ -5,7 +5,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from '../course/course-navigation';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FavoriteFolderCreateScreen = () => {
     const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
@@ -38,8 +38,7 @@ const FavoriteFolderCreateScreen = () => {
     }
 
     try {
-      const token = await SecureStore.getItemAsync('accessToken');
-      // const token = '(로그인 후 액세스 토큰 입력)';
+      const token = await AsyncStorage.getItem('accessToken');
       const response = await fetch('http://localhost:8080/api/course-scrap-folder', {
         method: 'POST',
         headers: {
