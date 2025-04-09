@@ -1,20 +1,11 @@
 import React, { useLayoutEffect, useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  StyleSheet,
-  Alert,
-  Image,
-} from 'react-native';
+import { View, Text, TextInput, FlatList, TouchableOpacity, StyleSheet, Alert, Image,} from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Folder = {
   id: number;
@@ -50,8 +41,7 @@ const CourseFolderSelectScreen = () => {
   useEffect(() => {
     const fetchFolders = async () => {
       try {
-        // const token = await SecureStore.getItemAsync('accessToken');
-        const token = 'eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXJFbWFpbCI6ImNobzk3NTlAZ21haWwuY29tIiwicm9sZSI6IlJPTEVfQ09VUExFIiwiaWF0IjoxNzQzNTk4NTUxLCJleHAiOjQ4Mzk5NTk4NTUxfQ.HAT3ySMyvOWwOkbHrs3gnDINrnGT-4GSdvSJwfnxMW8';
+        const token = await AsyncStorage.getItem('accessToken');
         const response = await fetch('http://localhost:8080/api/course-folder', {
           method: 'GET',
           headers: {
@@ -64,8 +54,8 @@ const CourseFolderSelectScreen = () => {
         const data = await response.json();
   
         const mapped = data.map((item: any) => ({
-          id: item.folder_id,
-          title: item.folder_name,
+          id: item.folderId,
+          title: item.folderName,
         }));
   
         setFolders(mapped);
@@ -85,13 +75,11 @@ const CourseFolderSelectScreen = () => {
       }
   
       try {
-        // const token = await SecureStore.getItemAsync('accessToken');
-        // const token = '(로그인 후 액세스 토큰 입력)';
-        const token = 'eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXJFbWFpbCI6ImNobzk3NTlAZ21haWwuY29tIiwicm9sZSI6IlJPTEVfQ09VUExFIiwiaWF0IjoxNzQzNTk4NTUxLCJleHAiOjQ4Mzk5NTk4NTUxfQ.HAT3ySMyvOWwOkbHrs3gnDINrnGT-4GSdvSJwfnxMW8';
+        const token = await AsyncStorage.getItem('accessToken');
         const payload = {
-          folder_name: newFolderTitle,
-          folder_description: newFolderDescription, // optional
-          folder_image: selectedImage,              // optional (base64 or url 처리)
+          folderName: newFolderTitle,
+          folderDescription: newFolderDescription, // optional
+          folderImage: selectedImage,              // optional (base64 or url 처리)
         };
   
         const response = await fetch('http://localhost:8080/api/course-folder', {
@@ -107,8 +95,8 @@ const CourseFolderSelectScreen = () => {
         const data = await response.json();
   
         navigation.navigate('CourseCreate', {
-          folderId: data.folder_id,
-          folderTitle: data.folder_name,
+          folderId: data.folderId,
+          folderTitle: data.folderName,
         });
       } catch (err) {
         Alert.alert('오류', '폴더를 생성할 수 없습니다.');
