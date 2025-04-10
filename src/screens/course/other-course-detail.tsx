@@ -6,38 +6,46 @@ import CourseLayout from './course-layout';
 import ReportModal from '../../components/modals/course/ReportModal';
 import CourseScrapModal from '../../components/modals/course/CourseScrapModal';
 import { useScrapCourse } from '../../hooks/UseScrapCourse';
-import * as SecureStore from 'expo-secure-store';
-import { NAVER_CLIENT_ID, NAVER_CLIENT_SECRET, NAVER_BASE_URL } from '@env';
+import { format, parseISO } from 'date-fns';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type DateCourseLocation = {
-  course_id: number;
-  location_id: number;
-  location_name: string;
+  courseId: number;
+  locationId: number;
+  locationName: string;
   address: string;
   latitude: number;
   longitude: number;
   sequence: number;
-  course_memo?: string;
+  courseMemo?: string;
 };
 
 type RouteParams = {
-    courseId: number;
-    courseTitle: string;
-    courseType: 'DATE' | 'TRIP';
-    courseStartDate: string;
-    courseEndDate: string;
-  };
+  courseId: number;
+  courseTitle: string;
+  courseType: 'DATE' | 'TRIP';
+  courseStartDate: string;
+  courseEndDate: string;
+};
+
+type FolderWithCourses = {
+  courseScrapFolderId: number;
+  folderName: string;
+  courseIds: number[];
+};
+
 
 const OtherCourseDetail = () => {
   const [locations, setLocations] = useState<DateCourseLocation[]>([]);
   const route = useRoute();
   const navigation = useNavigation();
-  const { courseId, courseTitle, courseType, courseStartDate, courseEndDate } = route.params as RouteParams;
-  
+  const { courseId, courseTitle, courseType, courseStartDate, courseEndDate } = route.params as RouteParams;  
   const [isMapVisible, setIsMapVisible] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   const [loading, setLoading] = useState(false);
   const slideAnim = useRef(new Animated.Value(-300)).current;
+  const [scrappedCourseIds, setScrappedCourseIds] = useState<number[]>([]);
+  const [isScrapped, setIsScrapped] = useState(false);
 
   const {
     folders,
@@ -56,8 +64,7 @@ const OtherCourseDetail = () => {
     const fetchCourseDetail = async () => {
       try {
         setLoading(true);
-        const token = await SecureStore.getItemAsync('accessToken');
-        // const token = '(로그인 후 액세스 토큰 입력)';
+        const token = await AsyncStorage.getItem('accessToken');
         const response = await fetch(`http://localhost:8080/api/course/${courseId}`, {
           headers: {
             'Content-Type': 'application/json',
@@ -79,9 +86,34 @@ const OtherCourseDetail = () => {
     };
   
     fetchCourseDetail();
-  }, [courseId]);  
+  }, [courseId]);
 
-  const handleReportSubmit = (reason) => {
+  useEffect(() => {
+    const fetchScrappedCourseIds = async () => {
+      try {
+        const token = await AsyncStorage.getItem('accessToken');
+        const response = await fetch(`http://localhost:8080/api/course-scrap-folder/with-courses`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+  
+        const data: FolderWithCourses[] = await response.json();
+  
+        // 모든 폴더의 courseId를 flat하게 모아서 비교
+        const allScrappedIds = data.flatMap(folder => folder.courseIds);
+        setScrappedCourseIds(allScrappedIds);
+        setIsScrapped(allScrappedIds.includes(courseId));
+      } catch (err) {
+        console.error('스크랩 여부 확인 중 오류:', err);
+      }
+    };
+  
+    fetchScrappedCourseIds();
+  }, [courseId]);
+  
+
+  const handleReportSubmit = (reason: any) => {
     setShowReportModal(false);
     console.log('신고 사유:', reason);
   };
@@ -108,14 +140,15 @@ const OtherCourseDetail = () => {
       }).start(() => setIsMapVisible(false));
     }
   };
-  
 
   return (
     <CourseLayout selectedTab="데이트 코스" onTabSelect={() => {}}>
         <View style={styles.headerContainer}>
             <View>
                 <Text style={styles.title}>{courseTitle}</Text>
-                <Text style={styles.date}>{courseStartDate} ~ {courseEndDate}</Text>
+                <Text style={styles.date}>
+                  {format(parseISO(courseStartDate), 'yyyy.MM.dd')} ~ {format(parseISO(courseEndDate), 'yyyy.MM.dd')}
+                </Text>
             </View>
 
             <View style={styles.rightHeaderGroup}>
@@ -142,7 +175,7 @@ const OtherCourseDetail = () => {
                 >
                 {locations.map(loc => (
                 <NaverMapMarkerOverlay
-                key={loc.location_id}
+                key={loc.locationId}
                 latitude={loc.latitude}
                 longitude={loc.longitude}
                 width={30}
@@ -155,21 +188,23 @@ const OtherCourseDetail = () => {
 
       <FlatList
         data={locations}
-        keyExtractor={(item) => item.location_id.toString()}
+        keyExtractor={(item) => item.locationId.toString()}
         renderItem={({ item }) => (
           <View style={styles.locationItem}>
-            <Text style={styles.locationName}>{item.location_name}</Text>
+            <Text style={styles.locationName}>{item.locationName}</Text>
             <Text style={styles.locationAddress}>{item.address}</Text>
-            {item.course_memo && <Text style={styles.courseMemo}>{item.course_memo}</Text>}
+            {item.courseMemo && <Text style={styles.courseMemo}>{item.courseMemo}</Text>}
           </View>
         )}
       />
 
-      <View style={styles.bottomButtons}>
-        <TouchableOpacity style={styles.registerButton} onPress={onAddToFavorite}>
+      {!isScrapped && (
+        <View style={styles.bottomButtons}>
+          <TouchableOpacity style={styles.registerButton} onPress={onAddToFavorite}>
             <Text style={styles.registerButtonText}>즐겨찾기에 추가</Text>
-        </TouchableOpacity>
-      </View>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <ReportModal
         visible={showReportModal}
@@ -182,6 +217,7 @@ const OtherCourseDetail = () => {
         status={status}
         folders={folders}
         selectedFolderId={selectedFolderId}
+        courseId={courseId}
         setSelectedFolderId={setSelectedFolderId}
         scrapTargetName={scrapTargetName}
         onCreatePress={() => handleCreateNavigate(navigation)}
@@ -207,13 +243,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  mapButton: {
-    backgroundColor: '#FF6F61',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    marginRight: 4,
-  },  
+  mapButton: {backgroundColor: '#FF6F61',paddingVertical: 9.5, paddingHorizontal: 8, borderRadius: 8, alignSelf: 'center',},
   mapButtonText: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
   mapContainer: { width: '100%', height: 250, overflow: 'hidden', backgroundColor: 'white' },
   locationItem: {
@@ -221,8 +251,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
-  locationName: { fontSize: 16, fontWeight: 'bold' },
-  locationAddress: { fontSize: 12, color: '#666' },
+  locationName: { fontSize: 16, fontWeight: 'bold', marginBottom: 3, },
+  locationAddress: { fontSize: 12, color: '#666', marginBottom: 3, },
   courseMemo: { fontSize: 12, color: '#888', fontStyle: 'italic' },
   bottomButtons: {
     paddingHorizontal: 16,

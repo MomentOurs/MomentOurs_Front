@@ -5,7 +5,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import CourseLayout from './course-layout';
 import CourseDeleteConfirmModal from '../../components/modals/course/CourseDeleteConfirmModal';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Course = {
     courseId: number;
@@ -18,51 +18,20 @@ type Course = {
 const CourseFolderDetail = () => {
     const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
     const route = useRoute();
-    const { folderId, folderTitle, folderDescription } = route.params as { folderId: number; folderTitle: string; folderDescription: string };
-    const [courses, setCourses] = useState<Course[]>([]);
+    const { folderId, folderTitle, folderDescription, courses: initialCourses } = route.params as { folderId: number; folderTitle: string; folderDescription: string; courses: any[]; };
+    const [courses, setCourses] = useState<Course[]>(initialCourses || []);
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchCourses();
-    }, []);
-    
-    const fetchCourses = async () => {
-        try {
-            const token = await SecureStore.getItemAsync('accessToken');
-            // const token = '(로그인 후 액세스 토큰 입력)';
-            const response = await fetch(`http://localhost:8080/api/course/folder/${folderId}`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-    
-            if (!response.ok) throw new Error('Failed to fetch courses');
-            const data = await response.json();
-    
-            const mappedCourses = data.map((item: any) => ({
-                courseId: item.courseId,
-                courseTitle: item.courseTitle,
-                courseType: item.courseType,
-                courseStartDate: item.courseStartDate,
-                courseEndDate: item.courseEndDate,
-            }));
-          
-            setCourses(mappedCourses);
-        } catch (error) {
-            console.error('폴더 내 코스 조회 실패:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-    
 
     const [selectedTab, setSelectedTab] = useState('내 코스');
     const [isDeleteMode, setIsDeleteMode] = useState(false);
     const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    
+
+    useEffect(() => {
+        setCourses(initialCourses || []);
+        setLoading(false);
+      }, [initialCourses]);
+      
     const toggleDeleteMode = () => {
         setIsDeleteMode(!isDeleteMode);
         setSelectedCourses([]);

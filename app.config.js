@@ -15,7 +15,14 @@ export default {
       backgroundColor: '#FF8A8A'
     },
     ios: {
-      bundleIdentifier: process.env.IOS_BUNDLE_ID
+      bundleIdentifier: process.env.IOS_BUNDLE_ID,
+      infoPlist: {
+        NSPhotoLibraryUsageDescription: '앨범에서 이미지를 선택하기 위해 접근 권한이 필요합니다.',
+        NSCameraUsageDescription: '사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.',
+        NSPhotoLibraryAddUsageDescription: '이미지를 저장하기 위해 사진 라이브러리 접근 권한이 필요합니다.',
+        NSLocationWhenInUseUsageDescription: '현재 위치를 기반으로 지도를 표시하기 위해 필요합니다.',
+        NSLocationAlwaysAndWhenInUseUsageDescription: '현재 위치를 기반으로 지도를 표시하기 위해 필요합니다.'
+      }
     },
     android: {
       package: 'beyond.momentours',

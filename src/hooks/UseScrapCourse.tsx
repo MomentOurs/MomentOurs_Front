@@ -1,9 +1,11 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useState } from 'react';
 import { Alert } from 'react-native';
 
 export interface Folder {
   courseScrapFolderId: number;
   folderName: string;
+  courseIds?: number[];
 }
 
 export const useScrapCourse = () => {
@@ -20,10 +22,12 @@ export const useScrapCourse = () => {
 
   const fetchFolders = async () => {
     try {
+      const token = await AsyncStorage.getItem('accessToken');
       const response = await fetch('http://localhost:8080/api/course-scrap-folder', {
         method: 'GET',
         headers: {
-          Authorization: `Bearer YOUR_ACCESS_TOKEN`,
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
       });
 
@@ -48,10 +52,11 @@ export const useScrapCourse = () => {
     if (!selectedFolderId) return;
 
     try {
+      const token = await AsyncStorage.getItem('accessToken');
       const response = await fetch('http://localhost:8080/api/course-scrap', {
         method: 'POST',
         headers: {
-          Authorization: `Bearer YOUR_ACCESS_TOKEN`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

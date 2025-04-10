@@ -12,18 +12,47 @@ import FavoriteCourseTab from '../../../pages/course/favorite-course-tab';
 import CourseFolderSelectScreen from './course-folder-select';
 import OtherCourseDetail from './other-course-detail';
 import FavoriteFolderCreate from './favorite-folder-create';
+import FavoriteFolderDetailScreen from './favorite-folder-detail';
 
 export type CourseStackParamList = {
   CourseScreen: { refresh?: boolean; goToCreate?: boolean; initialTab?: '내 코스' | '데이트 코스' | '즐겨찾기' };
   CourseCreate: { folderId: number; folderTitle: string };
   CourseFolderSelect: undefined;
-  CourseFolderDetail: { folderId: number; folderTitle: string; folderDescription: string };
+  CourseFolderDetail: {
+    folderId: number;
+    folderTitle: string;
+    folderDescription: string;
+    courses: {
+      courseId: number;
+      courseTitle: string;
+      courseType: 'DATE' | 'TRIP';
+      courseStartDate: string;
+      courseEndDate: string;
+    }[];
+  };
   CourseDetail: { courseId: number; courseTitle: string; courseType: 'DATE' | 'TRIP'; courseStartDate: string; courseEndDate: string };
   CourseLocationSearch: undefined;
   DateCourseTab: undefined;
   FavoriteCourseTab: { refreshFavorite?: boolean };
-  OtherCourseDetail: { courseId: number; courseTitle: string; courseType: 'DATE' | 'TRIP'; courseStartDate: string; courseEndDate: string };
+  OtherCourseDetail: {
+    courseId: number;
+    courseTitle: string;
+    courseType: 'DATE' | 'TRIP';
+    courseStartDate: string;
+    courseEndDate: string;
+  };
   FavoriteFolderCreate: undefined;
+  FavoriteFolderDetail: {
+    courseScrapFolderId: number;
+    folderName: string;
+    courses: {
+      courseId: number;
+      courseTitle: string;
+      courseType: 'DATE' | 'TRIP';
+      courseStartDate: string;
+      courseEndDate: string;
+    }[];
+  };  
 };
 
 const Stack = createStackNavigator<CourseStackParamList>();
@@ -41,6 +70,7 @@ const CourseNavigator = () => {
       <Stack.Screen name="CourseLocationSearch" component={CourseLocationSearch} options={{ animation: 'none' }} />
       <Stack.Screen name="OtherCourseDetail" component={OtherCourseDetail} options={{ animation: 'none' }}/>
       <Stack.Screen name="FavoriteFolderCreate" component={FavoriteFolderCreate} options={{ animation: 'none' }}/>
+      <Stack.Screen name="FavoriteFolderDetail" component={FavoriteFolderDetailScreen} options={{ animation: 'none' }}/>
     </Stack.Navigator>
   );
 };

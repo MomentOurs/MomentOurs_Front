@@ -4,13 +4,16 @@ import CourseLayout from '../../src/screens/course/course-layout';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from '../../src/screens/course/course-navigation';
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Folder {
-  course_scrap_folder_id: number;
-  folder_name: string;
-  course_count: number;
-  folder_image?: string;
+  courseScrapFolderId: number;
+  folderName: string;
+  folderDescription?: string
+  courseCount: number;
+  folderImage?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 const FavoriteCourseTab = ({ refresh }: { refresh?: boolean }) => {
@@ -18,10 +21,6 @@ const FavoriteCourseTab = ({ refresh }: { refresh?: boolean }) => {
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
   const route = useRoute();
-
-  useEffect(() => {
-    fetchFavoriteFolders();
-  }, []);  
 
   useFocusEffect(
     useCallback(() => {
@@ -31,8 +30,7 @@ const FavoriteCourseTab = ({ refresh }: { refresh?: boolean }) => {
   
   const fetchFavoriteFolders = async () => {
     try {
-        const token = await SecureStore.getItemAsync('accessToken');
-        // const token = '(로그인 후 액세스 토큰 입력)';
+        const token = await AsyncStorage.getItem('accessToken');
         const response = await fetch('http://localhost:8080/api/course-scrap-folder', {
         method: 'GET',
         headers: {
@@ -56,7 +54,7 @@ const FavoriteCourseTab = ({ refresh }: { refresh?: boolean }) => {
   return (
     <CourseLayout selectedTab="즐겨찾기" onTabSelect={() => {}}>
       <TouchableOpacity
-        style={styles.createFolderButton}
+        style={[styles.createFolderButton, { padding: 7 }]}
         onPress={() => navigation.navigate('FavoriteFolderCreate')}
       >
         <Image source={require('../../assets/add-square.png')} style={styles.createFolderIcon} />
@@ -73,19 +71,48 @@ const FavoriteCourseTab = ({ refresh }: { refresh?: boolean }) => {
       ) : (
         <FlatList
           data={folders}
-          keyExtractor={(item) => item.course_scrap_folder_id.toString()}
-          contentContainerStyle={{ padding: 12 }}
+          keyExtractor={(item) => item.courseScrapFolderId.toString()}
           renderItem={({ item }) => (
-            <TouchableOpacity style={styles.folderItem}>
-              {item.folder_image && (
+            <TouchableOpacity style={styles.folderItem} 
+            onPress={async () => {
+              try {
+                const token = await AsyncStorage.getItem('accessToken');
+                const response = await fetch(`http://localhost:8080/api/course/${item.courseScrapFolderId}/courses`, {
+                  headers: { Authorization: `Bearer ${token}` },
+                });
+            
+                if (!response.ok) throw new Error('코스 조회 실패');
+            
+                const data = await response.json();
+            
+                const courses = data.map((item: any) => ({
+                  courseId: item.courseId,
+                  courseTitle: item.courseTitle,
+                  courseType: item.courseType,
+                  courseStartDate: item.courseStartDate,
+                  courseEndDate: item.courseEndDate,
+                }));
+            
+                navigation.navigate('FavoriteFolderDetail', {
+                  courseScrapFolderId: item.courseScrapFolderId,
+                  folderName: item.folderName,
+                  courses,
+                });
+              } catch (e) {
+                console.error('❌ 폴더 코스 미리 조회 실패:', e);
+              }
+            }}
+            >
+              {item.folderImage && (
                 <Image
-                  source={{ uri: item.folder_image }}
+                  source={{ uri: item.folderImage }}
                   style={styles.folderImage}
                 />
               )}
               <View>
-                <Text style={styles.folderTitle}>{item.folder_name}</Text>
-                <Text style={styles.folderCourseCount}>{item.course_count}개</Text>
+                <Text style={styles.folderTitle}>{item.folderName}</Text>
+                <Text style={styles.folderDescription}>{item.folderDescription ?? ''}</Text>
+                <Text style={styles.folderCourseCount}>{item.courseCount}개</Text>
               </View>
             </TouchableOpacity>
           )}
@@ -105,13 +132,15 @@ const styles = StyleSheet.create({
   createFolderButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    margin: 10,
+    margin: 7,
+    marginBottom: 10,
   },
   createFolderIcon: {
     width: 14,
     height: 14,
     tintColor: '#888',
-    marginRight: 6,
+    marginLeft: 1,
+    marginRight: 10,
   },
   createFolderText: {
     color: '#888',
@@ -143,6 +172,11 @@ const styles = StyleSheet.create({
   folderTitle: {
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  folderDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginVertical: 4,
   },
   folderCourseCount: {
     fontSize: 14,
