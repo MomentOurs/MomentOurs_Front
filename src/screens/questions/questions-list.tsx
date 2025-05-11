@@ -54,60 +54,65 @@ const QuestionsListScreen = () => {
         navigation.navigate("RandomQuestions", { userQuesId: item.userQuesId });
     };
 
-    const renderItem = ({ item }: { item: any }) => (
-        <TouchableOpacity
-            style={styles.questionContainer}
-            onPress={() => handlePressQuestion(item)}
-        >
-            <View style={styles.questionHeader}>
-                <Text style={styles.questionNumber}>#{item.userQuesId}</Text>
-                <Text style={styles.questionText}>{item.randomQuestion.quesContent}</Text>
-            </View>
-            <View style={styles.questionFooter}>
-                <Text style={styles.dateText}>{item.createdAt.slice(0, 10)}</Text>
-                <View style={styles.answerContainer}>
-                    <TouchableOpacity
-                        style={[
-                            styles.answerButton,
-                            item.ansStatus === "MINE" || item.ansStatus === "ALL"
-                                ? styles.activeButton
-                                : styles.inactiveButton
-                        ]}
-                    >
-                        <Text
-                            style={[
-                                styles.answerText,
-                                item.ansStatus === "MINE" || item.ansStatus === "ALL"
-                                    ? styles.activeText
-                                    : styles.inactiveText
-                            ]}
-                        >
-                            나
-                        </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[
-                            styles.answerButton,
-                            item.ansStatus === "YOURS" || item.ansStatus === "ALL"
-                                ? styles.activeButton
-                                : styles.inactiveButton
-                        ]}
-                    >
-                        <Text
-                            style={[
-                                styles.answerText,
-                                item.ansStatus === "YOURS" || item.ansStatus === "ALL"
-                                    ? styles.activeText
-                                    : styles.inactiveText
-                            ]}
-                        >
-                            당신
-                        </Text>
-                    </TouchableOpacity>
+    const renderItem = ({ item, index }: { item: any; index: number }) => {
+        const displayNumber = questions.length - index;
+
+        return (
+            <TouchableOpacity
+                style={styles.questionContainer}
+                onPress={() => handlePressQuestion(item)}
+            >
+                <View style={styles.questionHeader}>
+                    <Text style={styles.questionNumber}>#{displayNumber}</Text>
+                    <Text style={styles.questionText}>{item.randomQuestion.quesContent}</Text>
                 </View>
-            </View>
-        </TouchableOpacity>
-    );
+                <View style={styles.questionFooter}>
+                    <Text style={styles.dateText}>{item.createdAt.slice(0, 10)}</Text>
+                    <View style={styles.answerContainer}>
+                        <TouchableOpacity
+                            style={[
+                                styles.answerButton,
+                                item.ansStatus === "MINE" || item.ansStatus === "ALL"
+                                    ? styles.activeButton
+                                    : styles.inactiveButton
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    styles.answerText,
+                                    item.ansStatus === "MINE" || item.ansStatus === "ALL"
+                                        ? styles.activeText
+                                        : styles.inactiveText
+                                ]}
+                            >
+                                나
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[
+                                styles.answerButton,
+                                item.ansStatus === "YOURS" || item.ansStatus === "ALL"
+                                    ? styles.activeButton
+                                    : styles.inactiveButton
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    styles.answerText,
+                                    item.ansStatus === "YOURS" || item.ansStatus === "ALL"
+                                        ? styles.activeText
+                                        : styles.inactiveText
+                                ]}
+                            >
+                                당신
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
 
     return (
         <View style={styles.container}>

@@ -1,12 +1,11 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = 'http://localhost:8080/api/randomquestion-answer';
 
-// Postman에서 받은 토큰을 여기에 직접 할당 (임시용)
-const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXJFbWFpbCI6IjExMTFAbmF2ZXIuY29tIiwicm9sZSI6IlJPTEVfTUVNQkVSIiwiaWF0IjoxNzQzMDc3NzMyLCJleHAiOjQ4Mzk5MDc3NzMyfQ.4jj8sOVRdZ92EOZmAZCLCFJxfS_U4zvp1NpeAIpAyCg'; 
-
 export const getQuestionAnswers = async (myQuesAnsId: number) => {
     try {
+        const TOKEN = await AsyncStorage.getItem('accessToken');
         const response = await axios.get(`${API_BASE_URL}/${myQuesAnsId}`, {
             headers: { Authorization: `Bearer ${TOKEN}` }, 
         });
@@ -19,6 +18,7 @@ export const getQuestionAnswers = async (myQuesAnsId: number) => {
 
 export const deleteAnswer = async (userQuesId: number) => {
     try {
+        const TOKEN = await AsyncStorage.getItem('accessToken');
         const response = await axios.delete(`${API_BASE_URL}/${userQuesId}`, {
             headers: { Authorization: `Bearer ${TOKEN}` },
         });
@@ -31,6 +31,7 @@ export const deleteAnswer = async (userQuesId: number) => {
 
 export const createAnswer = async (userQuesId: number, quesAnsContent: string) => {
     try {
+        const TOKEN = await AsyncStorage.getItem('accessToken');
         const response = await axios.post(
             `${API_BASE_URL}`, 
             { userQuesId, quesAnsContent },
@@ -47,6 +48,7 @@ export const createAnswer = async (userQuesId: number, quesAnsContent: string) =
 
 export const updateAnswer = async (userQuesId: number, payload: { quesAnsContent: string }) => {
     try {
+        const TOKEN = await AsyncStorage.getItem('accessToken');
         const response = await axios.patch(
             `${API_BASE_URL}/${userQuesId}`, payload,
             {
