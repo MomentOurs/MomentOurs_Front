@@ -18,6 +18,7 @@
     "@react-navigation/stack": "^7.1.2",
     "axios": "^1.8.4",
     "date-fns": "^4.1.0",
+    "babel-plugin-dotenv-import": "^3.0.1",
     "expo": "~52.0.35",
     "expo-dev-client": "~5.0.14",
     "expo-font": "^13.0.4",

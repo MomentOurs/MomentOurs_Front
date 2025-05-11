@@ -19,6 +19,8 @@ interface SignUpScreen3Props {
 const SignUpScreen3: React.FC<SignUpScreen3Props> = ({ navigation, route }) => {
     const { email, password, name, nickname } = route.params;
     const [birthDate, setBirthDate] = useState('');
+    const [birthDateError, setBirthDateError] = useState<string | null>(null);
+    const [MBTIError, setMBTIError] = useState<string | null>(null);
     const [selectedGender, setSelectedGender] = useState<'여성' | '남성' | null>(null);
     const [mbti, setMbti] = useState('');
     const isFormValid = birthDate.trim() !== '' && selectedGender !== null;
@@ -26,7 +28,7 @@ const SignUpScreen3: React.FC<SignUpScreen3Props> = ({ navigation, route }) => {
 
     const handleSendEmail = async () => {
         try {
-            console.log("📢 이메일 인증 코드 요청 데이터:", { memberEmail: email });
+            console.log("이메일 인증 코드 요청 데이터:", { memberEmail: email });
     
             const response = await axios.post(
                 'http://localhost:8080/api/member/email/send',
@@ -40,14 +42,39 @@ const SignUpScreen3: React.FC<SignUpScreen3Props> = ({ navigation, route }) => {
                 Alert.alert('성공', '이메일로 인증 코드가 발송되었습니다.');
                 navigation.navigate('VerifyEmail', { email, password, name, nickname, birthDate, selectedGender: selectedGender ?? '', mbti });
             } else {
-                Alert.alert('⚠️ 오류', response.data.message);
+                Alert.alert('오류', response.data.message);
             }
         } catch (error) {
             console.error("이메일 인증 코드 요청 실패:", error);
             Alert.alert('오류', '서버 오류가 발생했습니다.');
         }
     };
-    
+
+    const isValidDate = (dateString: string): boolean => {
+        // 정규식 먼저 확인
+        const regex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!regex.test(dateString)) return false;
+      
+        // 날짜 구성요소 분해
+        const [year, month, day] = dateString.split('-').map(Number);
+      
+        // JS 날짜 객체로 만들기
+        const date = new Date(dateString);
+      
+        // 날짜가 유효한지 확인 (주의: 월은 0~11이기 때문에 +1 필요)
+        return (
+            date.getFullYear() === year &&
+            date.getMonth() + 1 === month &&
+            date.getDate() === day
+        );
+    };
+
+    const MBTIList = [
+        'INTJ', 'INTP', 'INFJ', 'INFP',
+        'ENTJ', 'ENTP', 'ENFJ', 'ENFP',
+        'ISTJ', 'ISTP', 'ISFJ', 'ISFP',
+        'ESTJ', 'ESTP', 'ESFJ', 'ESFP'
+    ];
 
     return( 
         <View style={styles.container}>
@@ -69,12 +96,28 @@ const SignUpScreen3: React.FC<SignUpScreen3Props> = ({ navigation, route }) => {
                 <View style={styles.inputRow}>
                     <TextInput 
                         style={styles.input} 
-                        placeholder="생년월일을 입력해 주세요" 
+                        placeholder="YYYY-MM-DD" 
                         placeholderTextColor="#aaa" 
                         value={birthDate}
-                        onChangeText={setBirthDate}
+                        // onChangeText={setBirthDate}
+                        onChangeText={(text) => {
+                            setBirthDate(text);
+                        
+                            if (text.trim() === '') {
+                                setBirthDateError(null);
+                            } else if (!isValidDate(text)) {
+                                setBirthDateError('올바른 생년월일 형식이 아니거나 존재하는 날짜가 아닙니다.');
+                            } else {
+                                setBirthDateError(null);
+                            }
+                        }}
                     />
                 </View>
+                {birthDateError !== null && (
+                    <Text style={{ color: 'red', marginTop: -20, marginBottom: 20 }}>
+                        {birthDateError}
+                    </Text>
+                )}
 
                 <Text style={styles.label}>성별</Text>
                 <View style={styles.genderContainer}>
@@ -98,22 +141,38 @@ const SignUpScreen3: React.FC<SignUpScreen3Props> = ({ navigation, route }) => {
                         placeholder="MBTI를 알려 주세요" 
                         placeholderTextColor="#aaa" 
                         value={mbti}
-                        onChangeText={setMbti}
+                        // onChangeText={setMbti}
+                        onChangeText={(text) => {
+                            const upperText = text.toUpperCase();  // 소문자 입력 대비
+                            setMbti(upperText);
+                            if (text.trim() === '') {
+                                setMBTIError(null);
+                            } else if (!MBTIList.includes(upperText)) {
+                                setMBTIError('올바르지 않은 형식입니다.');
+                            } else {
+                                setMBTIError(null);
+                            }
+                        }}
                     />
                 </View>
+                {MBTIError !== null && (
+                    <Text style={{ color: 'red', marginTop: -20, marginBottom: 20 }}>
+                        {MBTIError}
+                    </Text>
+                )}
             </View>
             {/* <TouchableOpacity style={styles.nextButton} onPress={() => alert('회원가입 완료')}>
                 <Text style={styles.nextButtonText}>회원가입 완료</Text>
             </TouchableOpacity> */}
-<TouchableOpacity 
-  style={[styles.nextButton, !isFormValid && styles.disabledButton]}
-  onPress={handleSendEmail}
-  disabled={!isFormValid}
->
-  <Text style={styles.nextButtonText}>회원가입 완료</Text>
-</TouchableOpacity>
+            <TouchableOpacity 
+                style={[styles.nextButton, !isFormValid && styles.disabledButton]}
+                onPress={handleSendEmail}
+                disabled={!isFormValid}
+            >
+                <Text style={styles.nextButtonText}>회원가입 완료</Text>
+            </TouchableOpacity>
         </View>
-)}
+    )}
 
 const styles = StyleSheet.create({
     container: {
