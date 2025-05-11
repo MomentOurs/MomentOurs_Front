@@ -10,6 +10,7 @@ import Octicons from '@expo/vector-icons/Octicons';
 import { StackScreenProps } from '@react-navigation/stack';
 import { CalendarStackParamList } from './calendar-container';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { RadioButton } from 'react-native-paper';
 
 type AddSchedulePageProps = StackScreenProps<CalendarStackParamList, 'Add'>;
 
@@ -30,6 +31,9 @@ const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) 
 
     const [datetimeModalMode, setDatetimeModalMode] = useState<DatePickerMode>('date');
     const [datetimeMode, setDatetimeMode] = useState<string>('start');
+
+    const [activeAlarm, setActiveAlarm] = React.useState<boolean>(false);
+    const [alarmChecked, setAlarmChecked] = React.useState('dDay');
 
     const getScheduleInfoAPI = async () => {
         try {
@@ -123,6 +127,10 @@ const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) 
 
     const onCancelDateTime = () => {
         setDateModalVisible(false);
+    };
+
+    const changeActiveAlarm = () => {
+        setActiveAlarm(!activeAlarm);
     };
 
     return (
@@ -257,13 +265,60 @@ const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) 
 
                 {/* 알람 */}
                 <View style={styles.inputContainer}>
-                    <TouchableOpacity
-                        style={styles.multiContainer}
-                        onPress={() => setAlarmModalVisible(true)}
-                    >
-                        <Ionicons style={texts.marginR} name="alarm-outline" size={24} color="#FF8A8A" />
-                        <Text style={{ fontSize: 18 }}>알람 없음</Text>
-                    </TouchableOpacity>
+                    <View
+                        style={{
+                            ...styles.multiContainer,
+                            justifyContent: 'space-between',
+                        }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons
+                                style={texts.marginR}
+                                name="alarm-outline"
+                                size={24}
+                                color="#FF8A8A"
+                            />
+                            <Text style={{ fontSize: 18 }}>
+                                {activeAlarm ? `알람` : `알람 없음`}
+                            </Text>
+                        </View>
+                        <TouchableOpacity onPress={changeActiveAlarm}>
+                            <MaterialIcons
+                                name={activeAlarm ? 'toggle-on' : 'toggle-off'}
+                                size={24}
+                                color="#FF8A8A"
+                            />
+                        </TouchableOpacity>
+                    </View>
+                    {activeAlarm ? (
+                        <View>
+                            <View style={styles.radioContainer}>
+                                <Text>당일</Text>
+                                <RadioButton
+                                    value="dDay"
+                                    status={alarmChecked === 'dDay' ? 'checked' : 'unchecked'}
+                                    onPress={() => setAlarmChecked('dDay')}
+                                />
+                            </View>
+                            <View style={styles.radioContainer}>
+                                <Text>하루 전</Text>
+                                <RadioButton
+                                    value="aDayAgo"
+                                    status={alarmChecked === 'aDayAgo' ? 'checked' : 'unchecked'}
+                                    onPress={() => setAlarmChecked('aDayAgo')}
+                                />
+                            </View>
+                            <View style={styles.radioContainer}>
+                                <Text>이틀 전</Text>
+                                <RadioButton
+                                    value="twoDayAgo"
+                                    status={
+                                        alarmChecked === 'twoDayAgo' ? 'checked' : 'unchecked'
+                                    }
+                                    onPress={() => setAlarmChecked('twoDayAgo')}
+                                />
+                            </View>
+                        </View>
+                    ) : null}
                 </View>
 
                 {/* 위치 */}
@@ -315,12 +370,6 @@ const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) 
                 onCancel={onCancelDateTime}
                 date={startDate}
             />
-            {/*
-            <AlarmSetModal
-                modalVisible={alarmModalVisible}
-                setModalVisible={setAlarmModalVisible}
-            />
-            */}
         </View>
     );
 };
