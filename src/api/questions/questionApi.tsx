@@ -1,12 +1,11 @@
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_BASE_URL = 'http://localhost:8080/api/random-question';
 
-const TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJtZW1iZXJFbWFpbCI6IjExMTFAbmF2ZXIuY29tIiwicm9sZSI6IlJPTEVfTUVNQkVSIiwiaWF0IjoxNzQzMDc3NzMyLCJleHAiOjQ4Mzk5MDc3NzMyfQ.4jj8sOVRdZ92EOZmAZCLCFJxfS_U4zvp1NpeAIpAyCg';
-
-
 export const getRandomQuestion = async () => {
     try {
+        const TOKEN = await AsyncStorage.getItem('accessToken');
         const response = await axios.get(`${API_BASE_URL}`, {
             headers: { Authorization: `Bearer ${TOKEN}` },
         });
@@ -14,6 +13,19 @@ export const getRandomQuestion = async () => {
         return response.data;
     } catch (error) {
         console.error("랜덤 질문 가져오기 오류:", error);
+        throw error;
+    }
+};
+
+export const getRandomQuestionById = async (userQuesId: number) => {
+    try {
+        const TOKEN = await AsyncStorage.getItem('accessToken');
+        const response = await axios.get(`${API_BASE_URL}/detail/${userQuesId}`, {
+            headers: { Authorization: `Bearer ${TOKEN}` },
+        });
+        return response.data;
+    } catch (error) {
+        console.error('특정 질문 가져오기 오류:', error);
         throw error;
     }
 };
@@ -30,6 +42,7 @@ export const getRandomQuestionList = async (
     keyword?: string 
 ) => {
     try {
+        const TOKEN = await AsyncStorage.getItem('accessToken');
         const response = await axios.get(`${API_BASE_URL}/list`, {
             headers: {
                 Authorization: `Bearer ${TOKEN}`,
