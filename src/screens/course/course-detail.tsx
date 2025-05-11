@@ -256,7 +256,7 @@ const CourseDetail = () => {
                 selectedCount={selectedLocations.length}
                 onClose={() => setShowDeleteModal(false)}
                 onConfirm={confirmDelete}
-            />
+            /> 
         </CourseLayout>
     );
 };
