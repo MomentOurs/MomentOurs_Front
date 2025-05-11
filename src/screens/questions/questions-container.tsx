@@ -10,20 +10,21 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getRandomQuestion, getQuestionAnswers, deleteAnswer } from '../../api/index';
+import { getRandomQuestion, getQuestionAnswers, deleteAnswer, getRandomQuestionById } from '../../api/index';
 import DeleteModal from '../../components/common/DeleteModal';
 
 type RootStackParamList = {
-    Questions: undefined;
+    RandomQuestions: { userQuesId: number };
     QuestionsRegister: { questionId: number; questionText: string; currentDate: string; userQuesId: number; };
     QuestionComment: { userQuesId: number; questionId: number; questionText: string };
     QuestionsUpdate: { questionId: number; questionText: string; currentDate: string; myQuesAnsId: number; myAnswer: string; };
 };
 type Props = {
     navigation: NativeStackNavigationProp<RootStackParamList>;
+    route: { params: { userQuesId: number } };
 };
 
-const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
+const QuestionsScreen: React.FC<Props> = ({ navigation, route }) => {
     const [questionId, setQuestionId] = useState<number | null>(null);
     const [questionText, setQuestionText] = useState<string | null>(null);
     const [userQuesId, setUserQuesId] = useState<number | null>(null);
@@ -36,27 +37,29 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const [showDeleteMessage, setShowDeleteMessage] = useState<boolean>(false);
 
-    const fetchQuestionAndAnswers = useCallback(async () => {
-        try {
-            const questionData = await getRandomQuestion();
-            if (questionData.success && questionData.data) {
-                setQuestionId(questionData.data.coupleQuesNo);
-                setQuestionText(questionData.data.randomQuestion.quesContent);
-                setUserQuesId(questionData.data.userQuesId);
+    // const fetchQuestionAndAnswers = useCallback(async () => {
+    //     if (!userQuesId) return;
 
-                const answerData = await getQuestionAnswers(questionData.data.userQuesId);
-                if (answerData.success && answerData.data) {
-                    setMyAnswer(answerData.data.myAnswer || "이곳을 눌러서 답변을 입력해 주세요.");
-                    setOtherAnswer(answerData.data.otherAnswer || "상대방이 아직 답변하지 않았어요.");
-                    setMyQuesAnsId(answerData.data.myQuesAnsId);
-                }
-            }
-        } catch (error) {
-            console.error('질문 및 답변 불러오는 중 오류 발생:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+    //     try {
+    //         const questionData = await getRandomQuestionById(userQuesId);
+    //         if (questionData.success && questionData.data) {
+    //             setQuestionId(questionData.data.coupleQuesNo);
+    //             setQuestionText(questionData.data.randomQuestion.quesContent);
+    //             setUserQuesId(questionData.data.userQuesId);
+
+    //             const answerData = await getQuestionAnswers(questionData.data.userQuesId);
+    //             if (answerData.success && answerData.data) {
+    //                 setMyAnswer(answerData.data.myAnswer || "이곳을 눌러서 답변을 입력해 주세요.");
+    //                 setOtherAnswer(answerData.data.otherAnswer || "상대방이 아직 답변하지 않았어요.");
+    //                 setMyQuesAnsId(answerData.data.myQuesAnsId);
+    //             }
+    //         }
+    //     } catch (error) {
+    //         console.error('질문 및 답변 불러오는 중 오류 발생:', error);
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // }, []);
 
     // 답변 삭제 함수 (서버에도 삭제 요청)
     const handleDeleteAnswer = async () => {
@@ -82,6 +85,17 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
     };
 
     useEffect(() => {
+    const init = async () => {
+        const { userQuesId: initialUserQuesId } = route.params ?? {};
+        if (initialUserQuesId) {
+            setUserQuesId(initialUserQuesId);
+        } else {
+            const latest = await getRandomQuestion();
+            if (latest.success && latest.data?.userQuesId) {
+                setUserQuesId(latest.data.userQuesId);
+            }
+        }
+
         const today = new Date();
         const formattedDate = today.toLocaleDateString('ko-KR', {
             year: 'numeric',
@@ -89,31 +103,37 @@ const QuestionsScreen: React.FC<Props> = ({ navigation }) => {
             day: '2-digit'
         }).replace(/-/g, '.');
         setCurrentDate(formattedDate);
+    };
 
-        const fetchQuestionAndAnswers = async () => {
-            try {
-                const questionData = await getRandomQuestion();
-                if (questionData.success && questionData.data) {
-                    setQuestionId(questionData.data.coupleQuesNo);
-                    setQuestionText(questionData.data.randomQuestion.quesContent);
-                    setUserQuesId(questionData.data.userQuesId);
+    init();
+}, [route.params]);
 
-                    const answerData = await getQuestionAnswers(questionData.data.userQuesId);
-                    if (answerData.success && answerData.data) {
-                        setMyAnswer(answerData.data.myAnswer || null);
-                        setOtherAnswer(answerData.data.otherAnswer || "상대방이 아직 답변하지 않았어요.");
-                        setMyQuesAnsId(answerData.data.myQuesAnsId);
-                    }
-                }
-            } catch (error) {
-                console.error('질문 및 답변 불러오는 중 오류 발생:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
+useEffect(() => {
+    if (userQuesId) {
         fetchQuestionAndAnswers();
-    }, []);
+    }
+}, [userQuesId]);
+
+const fetchQuestionAndAnswers = useCallback(async () => {
+    try {
+        const questionData = await getRandomQuestionById(userQuesId!);
+        if (questionData.success && questionData.data) {
+            setQuestionId(questionData.data.coupleQuesNo);
+            setQuestionText(questionData.data.randomQuestion.quesContent);
+
+            const answerData = await getQuestionAnswers(userQuesId!);
+            if (answerData.success && answerData.data) {
+                setMyAnswer(answerData.data.myAnswer || "이곳을 눌러서 답변을 입력해 주세요.");
+                setOtherAnswer(answerData.data.otherAnswer || "상대방이 아직 답변하지 않았어요.");
+                setMyQuesAnsId(answerData.data.myQuesAnsId);
+            }
+        }
+    } catch (error) {
+        console.error('질문 및 답변 불러오는 중 오류 발생:', error);
+    } finally {
+        setLoading(false);
+    }
+}, [userQuesId]);
 
     return (
         <View style={styles.container}>
