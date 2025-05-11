@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {Text, TextInput, View, StyleSheet, TouchableOpacity} from 'react-native';
+import { Text, TextInput, View, StyleSheet, TouchableOpacity } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -9,10 +9,13 @@ import Octicons from '@expo/vector-icons/Octicons';
 // import DatePickerModal from './date-picker-modal';
 import { StackScreenProps } from '@react-navigation/stack';
 import { CalendarStackParamList } from './calendar-container';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import { RadioButton } from 'react-native-paper';
 
 type AddSchedulePageProps = StackScreenProps<CalendarStackParamList, 'Add'>;
 
 const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) => {
+    type DatePickerMode = 'date' | 'time' | 'datetime';
     const [alarmModalVisible, setAlarmModalVisible] = useState<boolean>(false);
     const [dateModalVisible, setDateModalVisible] = useState<boolean>(false);
 
@@ -23,8 +26,14 @@ const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) 
     const [reminderDateTime, setReminderDateTime] = useState<string | null>(null);
     const [category, setCategory] = useState<'couple' | 'personal'>('couple');
     const [allDay, setAllDay] = useState<boolean>(false);
-    const [startDate, setStartDate] = useState<string | undefined>();
-    const [endDate, setEndDate] = useState<string | undefined>();
+    const [startDate, setStartDate] = useState<Date>(new Date());
+    const [endDate, setEndDate] = useState<Date>(new Date());
+
+    const [datetimeModalMode, setDatetimeModalMode] = useState<DatePickerMode>('date');
+    const [datetimeMode, setDatetimeMode] = useState<string>('start');
+
+    const [activeAlarm, setActiveAlarm] = React.useState<boolean>(false);
+    const [alarmChecked, setAlarmChecked] = React.useState('dDay');
 
     const getScheduleInfoAPI = async () => {
         try {
@@ -110,6 +119,20 @@ const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) 
         editMode ? editScheduleAPI() : postScheduleAPI();
     };
 
+    const onConfirmDateTime = (selectedDate: Date) => {
+        setDateModalVisible(false);
+        if (datetimeMode == 'start') setStartDate(selectedDate);
+        else setEndDate(selectedDate);
+    };
+
+    const onCancelDateTime = () => {
+        setDateModalVisible(false);
+    };
+
+    const changeActiveAlarm = () => {
+        setActiveAlarm(!activeAlarm);
+    };
+
     return (
         <View style={styles.container}>
             <View style={{ flex: 1 }}>
@@ -123,9 +146,18 @@ const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) 
                 {/* 날짜 & 시간 */}
                 <View style={styles.inputContainer}>
                     <View style={{ flexDirection: 'column' }}>
-                        <View style={{ ...styles.multiContainer, justifyContent: 'space-between' }}>
+                        <View
+                            style={{
+                                ...styles.multiContainer,
+                                justifyContent: 'space-between',
+                            }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                <Feather style={texts.marginR} name="clock" size={24} color="#FF8A8A" />
+                                <Feather
+                                    style={texts.marginR}
+                                    name="clock"
+                                    size={24}
+                                    color="#FF8A8A"
+                                />
                                 <Text style={allDay ? texts.black : texts.grey2}>종일</Text>
                             </View>
                             <TouchableOpacity onPress={changeAllDay}>
@@ -137,19 +169,83 @@ const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) 
                             </TouchableOpacity>
                         </View>
 
-                        <TouchableOpacity
-                            style={styles.multiContainer}
-                            onPress={() => setDateModalVisible(true)}
-                        >
-                            <MaterialIcons style={texts.marginR} name="keyboard-arrow-right" size={24} color="#FF8A8A" />
-                            <Text style={{ fontSize: 18, ...texts.grey3, ...texts.marginR }}>2025년 3월 12일(수)</Text>
-                            <Text style={allDay ? texts.unactivateTime : texts.activateTime}>1:00PM</Text>
-                        </TouchableOpacity>
+                        <View
+                            style={styles.multiContainer}>
+                            <MaterialIcons
+                                style={texts.marginR}
+                                name="keyboard-arrow-right"
+                                size={24}
+                                color="#FF8A8A"
+                            />
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setDatetimeModalMode('date');
+                                    setDatetimeMode('start');
+                                    setDateModalVisible(true);
+                                }}>
+                                <Text
+                                    style={{ fontSize: 18, ...texts.grey3, ...texts.marginR }}>
+                                    {startDate.getFullYear()}년 {startDate.getMonth() + 1}월{' '}
+                                    {startDate.getDate()}일
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    if (allDay) return;
+                                    setDatetimeModalMode('time');
+                                    setDatetimeMode('start');
+                                    setDateModalVisible(true);
+                                }}>
+                                <Text
+                                    style={allDay ? texts.unactivateTime : texts.activateTime}>
+                                    {startDate.getHours() < 10
+                                        ? `0${startDate.getHours()}`
+                                        : startDate.getHours()}
+                                    :
+                                    {startDate.getMinutes() < 10
+                                        ? `0${startDate.getMinutes()}`
+                                        : startDate.getMinutes()}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
 
                         <View style={styles.multiContainer}>
-                            <MaterialIcons style={texts.marginR} name="keyboard-arrow-left" size={24} color="#FF8A8A" />
-                            <Text style={{ fontSize: 18, ...texts.grey3, ...texts.marginR }}>2025년 3월 12일(수)</Text>
-                            <Text style={allDay ? texts.unactivateTime : texts.activateTime}>1:00PM</Text>
+                            <MaterialIcons
+                                style={texts.marginR}
+                                name="keyboard-arrow-left"
+                                size={24}
+                                color="#FF8A8A"
+                            />
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setDatetimeModalMode('date');
+                                    setDatetimeMode('end');
+                                    setDateModalVisible(true);
+                                }}>
+                                <Text
+                                    style={{ fontSize: 18, ...texts.grey3, ...texts.marginR }}>
+                                    {endDate.getFullYear()}년 {endDate.getMonth() + 1}월{' '}
+                                    {endDate.getDate()}일
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => {
+                                    if (allDay) return;
+                                    setDatetimeModalMode('time');
+                                    setDatetimeMode('end');
+                                    setDateModalVisible(true);
+                                }}>
+                                <Text
+                                    style={allDay ? texts.unactivateTime : texts.activateTime}>
+                                    {endDate.getHours() < 10
+                                        ? `0${endDate.getHours()}`
+                                        : endDate.getHours()}
+                                    :
+                                    {endDate.getMinutes() < 10
+                                        ? `0${endDate.getMinutes()}`
+                                        : endDate.getMinutes()}
+                                </Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
                 </View>
@@ -169,13 +265,60 @@ const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) 
 
                 {/* 알람 */}
                 <View style={styles.inputContainer}>
-                    <TouchableOpacity
-                        style={styles.multiContainer}
-                        onPress={() => setAlarmModalVisible(true)}
-                    >
-                        <Ionicons style={texts.marginR} name="alarm-outline" size={24} color="#FF8A8A" />
-                        <Text style={{ fontSize: 18 }}>알람 없음</Text>
-                    </TouchableOpacity>
+                    <View
+                        style={{
+                            ...styles.multiContainer,
+                            justifyContent: 'space-between',
+                        }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Ionicons
+                                style={texts.marginR}
+                                name="alarm-outline"
+                                size={24}
+                                color="#FF8A8A"
+                            />
+                            <Text style={{ fontSize: 18 }}>
+                                {activeAlarm ? `알람` : `알람 없음`}
+                            </Text>
+                        </View>
+                        <TouchableOpacity onPress={changeActiveAlarm}>
+                            <MaterialIcons
+                                name={activeAlarm ? 'toggle-on' : 'toggle-off'}
+                                size={24}
+                                color="#FF8A8A"
+                            />
+                        </TouchableOpacity>
+                    </View>
+                    {activeAlarm ? (
+                        <View>
+                            <View style={styles.radioContainer}>
+                                <Text>당일</Text>
+                                <RadioButton
+                                    value="dDay"
+                                    status={alarmChecked === 'dDay' ? 'checked' : 'unchecked'}
+                                    onPress={() => setAlarmChecked('dDay')}
+                                />
+                            </View>
+                            <View style={styles.radioContainer}>
+                                <Text>하루 전</Text>
+                                <RadioButton
+                                    value="aDayAgo"
+                                    status={alarmChecked === 'aDayAgo' ? 'checked' : 'unchecked'}
+                                    onPress={() => setAlarmChecked('aDayAgo')}
+                                />
+                            </View>
+                            <View style={styles.radioContainer}>
+                                <Text>이틀 전</Text>
+                                <RadioButton
+                                    value="twoDayAgo"
+                                    status={
+                                        alarmChecked === 'twoDayAgo' ? 'checked' : 'unchecked'
+                                    }
+                                    onPress={() => setAlarmChecked('twoDayAgo')}
+                                />
+                            </View>
+                        </View>
+                    ) : null}
                 </View>
 
                 {/* 위치 */}
@@ -219,16 +362,14 @@ const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) 
                 </TouchableOpacity>
             </View>
 
-            {/* 모달 
-            <DatePickerModal
-                modalVisible={dateModalVisible}
-                setModalVisible={setDateModalVisible}
+            {/* 모달  */}
+            <DateTimePickerModal
+                isVisible={dateModalVisible}
+                mode={datetimeModalMode}
+                onConfirm={onConfirmDateTime}
+                onCancel={onCancelDateTime}
+                date={startDate}
             />
-            <AlarmSetModal
-                modalVisible={alarmModalVisible}
-                setModalVisible={setAlarmModalVisible}
-            />
-            */}
         </View>
     );
 };
