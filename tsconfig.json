@@ -10,7 +10,7 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "moduleResolution": "node",
-    "types": ["@types/react"],
+    "types": ["@types/react", "@types/react-native", "@env"],
   },
-  "include": ["env.d.ts"]
+  "include": ["env.d.ts", "src","declarations.d.ts"]
 }
