@@ -7,7 +7,7 @@ export default {
     version: '1.0.0',
     orientation: 'portrait',
     userInterfaceStyle: 'light',
-    icon: './assets/splash.png',
+    icon: './assets/splash-icon.png',
     newArchEnabled: true,
     splash: {
       image: './assets/splash.png',
