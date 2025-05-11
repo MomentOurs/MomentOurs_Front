@@ -190,7 +190,13 @@ const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) 
                                 }}>
                                 <Text
                                     style={allDay ? texts.unactivateTime : texts.activateTime}>
-                                    {startDate.getHours()}:{startDate.getMinutes()}
+                                    {startDate.getHours() < 10
+                                        ? `0${startDate.getHours()}`
+                                        : startDate.getHours()}
+                                    :
+                                    {startDate.getMinutes() < 10
+                                        ? `0${startDate.getMinutes()}`
+                                        : startDate.getMinutes()}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -223,7 +229,13 @@ const AddSchedulePage: React.FC<AddSchedulePageProps> = ({ route, navigation }) 
                                 }}>
                                 <Text
                                     style={allDay ? texts.unactivateTime : texts.activateTime}>
-                                    {endDate.getHours()}:{endDate.getMinutes()}
+                                    {endDate.getHours() < 10
+                                        ? `0${endDate.getHours()}`
+                                        : endDate.getHours()}
+                                    :
+                                    {endDate.getMinutes() < 10
+                                        ? `0${endDate.getMinutes()}`
+                                        : endDate.getMinutes()}
                                 </Text>
                             </TouchableOpacity>
                         </View>
