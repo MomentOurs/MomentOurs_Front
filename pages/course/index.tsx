@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Image, Modal, TextInput } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { RouteProp, useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from '../../src/screens/course/course-navigation';
 import CourseLayout from '../../src/screens/course/course-layout';
 import { RenameFolderModal, RenameDescriptionModal, DeleteFolderModal } from '../../src/components/modals/course';
+import DateCourseTab from './datecourse-tab';
+import FavoriteCourseTab from './favorite-course-tab';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as ImagePicker from 'expo-image-picker';
 
 type Folder = {
     id: string;
@@ -14,87 +18,309 @@ type Folder = {
     image?: string;
 };
 
+type CourseScreenProps = {
+    route: RouteProp<CourseStackParamList, 'CourseScreen'>;
+};
+
 const tabs = ['데이트 코스', '내 코스', '즐겨찾기'];
 
-const CourseScreen = ({ route }) => {
+const CourseScreen = () => {
     const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
 
+    const route = useRoute<RouteProp<CourseStackParamList, 'CourseScreen'>>();
     const [folders, setFolders] = useState<Folder[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedTab, setSelectedTab] = useState('내 코스');
+    const [selectedTab, setSelectedTab] = useState<'내 코스' | '데이트 코스' | '즐겨찾기'>(
+        route.params?.initialTab ?? '내 코스'
+      );
     const [isEditMode, setIsEditMode] = useState(false);
     const [isDeleteMode, setIsDeleteMode] = useState(false);
     const [selectedFolders, setSelectedFolders] = useState<string[]>([]);
     const [activeModal, setActiveModal] = useState<string | null>(null);
+    const [deleteFolderCourseCount, setDeleteFolderCourseCount] = useState<number>(0);
     const [modalData, setModalData] = useState<{ folderName: string; text: string }>({ folderName: '', text: '' });
+    const [uncategorizedCourses, setUncategorizedCourses] = useState<any[]>([]);
+    const [showUncategorized, setShowUncategorized] = useState(false);
+
+    const fetchFolders = async () => {
+        try {
+            const token = await AsyncStorage.getItem('accessToken');
+            if (!token) {
+                console.warn('⚠️ 토큰이 없습니다. 로그인 상태를 확인해주세요.');
+                return;
+            }
+
+            const response = await fetch('http://localhost:8080/api/course-folder', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+    
+            if (!response.ok) {
+                throw new Error('Failed to fetch folders');
+            }
+    
+            const data = await response.json();
+    
+            setFolders(data.map((folder: any) => ({
+                id: folder.folderId.toString(),
+                title: folder.folderName,
+                description: folder.folderDescription,
+                courseCount: folder.courseCount,
+                image: folder.folderImage ? { uri: folder.folderImage } : undefined,
+            })));
+    
+        } catch (error) {
+            console.error('Error fetching folders:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleFolderPress = async (folderId: number, folderTitle: string, folderDescription: string) => {
+        try {
+            setLoading(true);
+            const token = await AsyncStorage.getItem('accessToken');
+            const response = await fetch(`http://localhost:8080/api/course/folder?folderId=${folderId}`, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  Authorization: `Bearer ${token}`,
+                },
+              });              
+    
+            if (!response.ok) throw new Error('Failed to fetch courses');
+            const courses = await response.json();
+    
+            navigation.navigate('CourseFolderDetail', {
+                folderId,
+                folderTitle,
+                folderDescription,
+                courses,
+            });
+        } catch (e) {
+            console.error('폴더 내 코스 리스트 조회 실패:', e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleRename = async () => {
+        try {
+          const token = await AsyncStorage.getItem('accessToken');
+      
+          const formData = new FormData();
+          formData.append('folderName', modalData.text);
+          formData.append('folderDescription', folders.find(f => f.id === selectedFolders[0])?.description || '');
+      
+          await fetch(`http://localhost:8080/api/course-folder/${selectedFolders[0]}`, {
+            method: 'PATCH',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          });
+      
+          fetchFolders();
+        } catch (e) {
+          console.error('폴더명 수정 실패:', e);
+        } finally {
+          setActiveModal(null);
+        }
+      };      
+    
+      const handleDescriptionUpdate = async () => {
+        try {
+          const token = await AsyncStorage.getItem('accessToken');
+      
+          const formData = new FormData();
+          formData.append('folderName', folders.find(f => f.id === selectedFolders[0])?.title || '');
+          formData.append('folderDescription', modalData.text);
+      
+          await fetch(`http://localhost:8080/api/course-folder/${selectedFolders[0]}`, {
+            method: 'PATCH',
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+          });
+      
+          fetchFolders();
+        } catch (e) {
+          console.error('폴더 설명 수정 실패:', e);
+        } finally {
+          setActiveModal(null);
+        }
+      };      
+
+    const handleFolderDelete = async () => {
+        try {
+          const token = await AsyncStorage.getItem('accessToken');
+          for (const folderId of selectedFolders) {
+            await fetch(`http://localhost:8080/api/course-folder/${folderId}`, {
+              method: 'DELETE',
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+          }
+          await fetchFolders();
+          await fetchUncategorizedCourses();
+        } catch (e) {
+          console.error('폴더 삭제 실패:', e);
+        } finally {
+          setActiveModal(null);
+          setIsDeleteMode(false);
+        }
+    };
+    
+    const fetchUncategorizedCourses = async () => {
+        const token = await AsyncStorage.getItem('accessToken');
+        const response = await fetch('http://localhost:8080/api/course/folder', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });          
+        const data = await response.json();
+        setUncategorizedCourses(data);
+    };
+
+    type Course = {
+        courseId: number;
+        courseTitle: string;
+        courseType: 'TRIP' | 'DATE';
+    };
+      
+    const UncategorizedCoursesSection = ({ courses }: { courses: any[] }) => {
+        const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
+    
+        return (
+            <View style={{ marginTop: 20 }}>
+                <TouchableOpacity
+                    style={styles.courseFolderItem}
+                    onPress={() => setShowUncategorized(!showUncategorized)}
+                >
+                    <View style={styles.courseTitleRow}>
+                        <Text style={styles.courseTitle}>기타 코스</Text>
+                        <Text style={styles.courseDescription}>{courses.length}개</Text>
+                    </View>
+                    <Image
+                        source={
+                            showUncategorized
+                                ? require('../../assets/arrow-up.png')
+                                : require('../../assets/arrow-down.png')
+                        }
+                        style={{ width: 16, height: 16, marginLeft: 'auto', tintColor: '#999' }}
+                    />
+                </TouchableOpacity>
+    
+                {showUncategorized && courses.map((course) => (
+                    <TouchableOpacity
+                    key={course.courseId}
+                    style={styles.courseItem}
+                    onPress={() =>
+                      navigation.navigate('OtherCourseDetail', {
+                        courseId: course.courseId,
+                        courseTitle: course.courseTitle,
+                        courseType: course.courseType,
+                        courseStartDate: course.courseStartDate,
+                        courseEndDate: course.courseEndDate,
+                      })
+                    }
+                  >
+                    <View style={styles.courseTextContainer}>
+                      <Text style={styles.courseTitle}>{course.courseTitle}</Text>
+                    </View>
+                  
+                    <View style={styles.courseTypeBadgeWrapper}>
+                      <Text style={[
+                        styles.courseTypeBadge,
+                        course.courseType === 'TRIP' ? styles.tripType : styles.dateType
+                      ]}>
+                        {course.courseType === 'TRIP' ? '여행' : '데이트'}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  
+                ))}
+            </View>
+        );
+    };    
+
+    const updateFolderWithImage = async (folderId: string, name: string, description: string, imageUri: string) => {
+        const token = await AsyncStorage.getItem('accessToken');
+    
+        const formData = new FormData();
+        formData.append('folderName', name);
+        formData.append('folderDescription', description);
+    
+        if (imageUri) {
+            const file = {
+                uri: imageUri,
+                name: 'folder.jpg',
+                type: 'image/jpeg',
+            };
+            formData.append('folder_image', file as any);
+        }
+    
+        const response = await fetch(`http://localhost:8080/api/course-folder/${folderId}`, {
+            method: 'PATCH',
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+            body: formData,
+        });
+    
+        if (!response.ok) {
+            throw new Error('수정 실패');
+        }
+    
+        return await response.json();
+    };    
+
+    const handleImageUpdate = async () => {
+        const folder = folders.find(f => f.id === selectedFolders[0]);
+        if (!folder) return;
+      
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [1, 1],
+          quality: 0.8,
+        });
+      
+        if (!result.canceled) {
+          const imageUri = result.assets[0].uri;
+      
+          try {
+            await updateFolderWithImage(
+              folder.id,
+              folder.title,
+              folder.description,
+              imageUri
+            );
+            fetchFolders();
+          } catch (err) {
+            console.error('이미지 업데이트 실패:', err);
+          }
+        }
+      };
 
     useEffect(() => {
-        // 실제 API 호출 (주석 처리해둠, 필요 시 활성화)
-        // fetchFolders();
-
-        setTimeout(() => {
-            setFolders([
-                { 
-                    id: '1', 
-                    title: '경주 관광지/To do', 
-                    description: '경주여행 관광 리스트', 
-                    courseCount: 3, 
-                    image: require('../../assets/image (1).png') 
-                },
-                { 
-                    id: '2', 
-                    title: '맛집 리스트', 
-                    description: '가고 싶은 맛집, 카페', 
-                    courseCount: 5, 
-                    image: require('../../assets/image (2).png') 
-                },
-            ]);
-            setLoading(false);
-        }, 1000);
+        fetchFolders();
+        fetchUncategorizedCourses();
     }, []);
 
-    // const fetchFolders = async () => {
-    //     try {
-    //         const response = await fetch('http://localhost:8080/api/course-folder', {
-    //             method: 'GET',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 Authorization: `Bearer YOUR_ACCESS_TOKEN`, // 실제 토큰 필요
-    //             },
-    //         });
-
-    //         if (!response.ok) {
-    //             throw new Error('Failed to fetch folders');
-    //         }
-
-    //         const data = await response.json();
-            
-    //         setFolders(data.map((folder: any) => ({
-    //             id: folder.folderId,
-    //             title: folder.folderName,
-    //             description: folder.folderDescription,
-    //             courseCount: folder.courseCount,
-    //             image: folder.folderImage || undefined,
-    //         })));
-
-    //     } catch (error) {
-    //         console.error('Error fetching folders:', error);
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
-
-    // useEffect(() => {
-    //     fetchFolders();
-    // }, []);
-
-    // useFocusEffect(
-    //     useCallback(() => {
-    //         if (route.params?.refresh) {
-    //             fetchFolders();
-    //         }
-    //     }, [route.params])
-    // );
+    useFocusEffect(
+        useCallback(() => {
+          if (route.params?.refresh) {
+            fetchFolders();
+            fetchUncategorizedCourses();
+          }
+        }, [route.params?.refresh])
+    );
 
     const toggleEditMode = () => {
         setIsEditMode(!isEditMode);
@@ -114,20 +340,10 @@ const CourseScreen = ({ route }) => {
         );
     };
 
-    const confirmDelete = () => {
-        setActiveModal(null);
-        setFolders(folders.filter(folder => !selectedFolders.includes(folder.id)));
-        setIsDeleteMode(false);
-    };
-
-    const openModal = (type: 'rename' | 'description' | 'delete', folder: Folder) => {
-        if (type === 'rename') {
-            setModalData({ folderName: folder.title, text: folder.title }); // 🛠 폴더명을 초기 값으로 설정
-        } else {
-            setModalData({ folderName: folder.title, text: folder.description }); // 기존 설명 유지
-        }
+    const openModal = (type: 'rename' | 'description', folder: Folder) => {
+        setModalData({ folderName: folder.title, text: type === 'rename' ? folder.title : folder.description });
         setActiveModal(type);
-    };    
+    };
 
     if (loading) {
         return (
@@ -138,85 +354,148 @@ const CourseScreen = ({ route }) => {
     }
 
     return (
-        <CourseLayout>
-            <View style={styles.courseActionRow}>
-                <TouchableOpacity
-                    style={styles.courseFolderButton}
-                    activeOpacity={0.7}
-                    onPress={() => navigation.navigate('CourseFolderCreate')}
-                >
-                    <Image source={require('../../assets/add-square.png')} style={styles.courseButtonIcon} />
-                    <Text style={styles.courseFolderButtonText}>폴더 만들기</Text>
-                </TouchableOpacity>
-    
-                <View style={styles.courseRightButtons}>
+        <CourseLayout
+        selectedTab={selectedTab}
+        onTabSelect={(tab) => {
+            setSelectedTab(tab as '내 코스' | '데이트 코스' | '즐겨찾기');
+        }}
+        >
+            {selectedTab === '내 코스' && (
+                <View style={styles.courseActionRow}>
                     <TouchableOpacity
-                        style={styles.courseSmallButton}
+                        style={styles.courseFolderButton}
                         activeOpacity={0.7}
-                        onPress={toggleDeleteMode}
+                        onPress={() => navigation.navigate('CourseFolderSelect')}
                     >
-                        <Image source={require('../../assets/trash.png')} style={styles.courseButtonIcon} />
-                        <Text style={styles.courseSmallButtonText}>{isDeleteMode ? "취소" : "삭제"}</Text>
+                        <Image source={require('../../assets/add-square.png')} style={styles.courseButtonIcon} />
+                        <Text style={styles.courseFolderButtonText}>코스 만들기</Text>
                     </TouchableOpacity>
-    
-                    <TouchableOpacity
-                        style={styles.courseSmallButton}
-                        activeOpacity={0.7}
-                        onPress={toggleEditMode}
-                    >
-                        <Image source={require('../../assets/pencil.png')} style={styles.courseButtonIcon} />
-                        <Text style={styles.courseSmallButtonText}>{isEditMode ? "취소" : "편집"}</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-    
-            {folders.length === 0 ? (
-                <View style={styles.courseEmptyMessageContainer}>
-                    <Text style={styles.courseEmptyMessage}>새로운 폴더를 생성해 보세요!</Text>
-                </View>
-            ) : (
-                <FlatList 
-                    data={folders}
-                    keyExtractor={(item) => item.id}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity 
-                            style={styles.courseFolderItem} 
-                            onPress={() => 
-                                isDeleteMode || isEditMode 
-                                ? toggleSelectFolder(item.id) 
-                                : navigation.navigate('CourseFolderDetail', { 
-                                    folderId: Number(item.id), 
-                                    folderTitle: item.title, 
-                                    folderDescription: item.description 
-                                })
-                            }
+        
+                    <View style={styles.courseRightButtons}>
+                        <TouchableOpacity
+                            style={styles.courseSmallButton}
+                            activeOpacity={0.7}
+                            onPress={toggleDeleteMode}
                         >
-                            {(isDeleteMode || isEditMode) && (
-                                <View style={[styles.courseCheckbox, selectedFolders.includes(item.id) && styles.courseCheckboxSelected]} />
-                            )}
-                            {item.image && (
-                                <Image 
-                                    source={typeof item.image === 'string' ? { uri: item.image } : item.image} 
-                                    style={styles.courseFolderImage} 
-                                />
-                            )}
-                            <View>
-                                <Text style={styles.courseFolderTitle}>{item.title}</Text>
-                                <Text style={styles.courseFolderDescription}>{item.description}</Text>
-                                <Text style={styles.courseCourseCount}>{item.courseCount}개</Text>
-                            </View>
+                            <Image source={require('../../assets/trash.png')} style={styles.courseButtonIcon} />
+                            <Text style={styles.courseSmallButtonText}>{isDeleteMode ? "취소" : "삭제"}</Text>
                         </TouchableOpacity>
-                    )}
-                />
+        
+                        <TouchableOpacity
+                            style={styles.courseSmallButton}
+                            activeOpacity={0.7}
+                            onPress={toggleEditMode}
+                        >
+                            <Image source={require('../../assets/pencil.png')} style={styles.courseButtonIcon} />
+                            <Text style={styles.courseSmallButtonText}>{isEditMode ? "취소" : "편집"}</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
             )}
     
+            {selectedTab === '내 코스' && (
+                folders.length === 0 ? (
+                    <View style={styles.courseEmptyMessageContainer}>
+                        <Text style={styles.courseEmptyMessage}>새로운 폴더를 생성해 보세요!</Text>
+                    </View>
+                ) : (
+                    <FlatList 
+                        data={folders}
+                        keyExtractor={(item) => item.id}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity 
+                                style={styles.courseFolderItem} 
+                                onPress={() =>
+                                    isDeleteMode || isEditMode
+                                      ? toggleSelectFolder(item.id)
+                                      : handleFolderPress(Number(item.id), item.title, item.description)
+                                  }                                  
+                            >
+                                {(isDeleteMode || isEditMode) && (
+                                    <TouchableOpacity
+                                        onPress={() => toggleSelectFolder(item.id)}
+                                        style={styles.checkboxWrapper}
+                                    >
+                                        <View style={styles.checkbox}>
+                                        {selectedFolders.includes(item.id) && <View style={styles.checkboxSelected} />}
+                                        </View>
+                                    </TouchableOpacity>
+                                )}
+
+                                {item.image && (
+                                    <Image 
+                                        source={typeof item.image === 'string' ? { uri: item.image } : item.image} 
+                                        style={styles.courseFolderImage} 
+                                    />
+                                )}
+                                <View>
+                                    <Text style={styles.courseFolderTitle}>{item.title}</Text>
+                                    <Text style={styles.courseFolderDescription}>{item.description}</Text>
+                                    <Text style={styles.courseCourseCount}>{item.courseCount}개</Text>
+                                </View>
+                            </TouchableOpacity>
+                        )}
+                        ListFooterComponent={<UncategorizedCoursesSection courses={uncategorizedCourses} />}
+                    />
+                )
+            )}
+
+            {selectedTab === '데이트 코스' && (
+                <DateCourseTab />
+            )}
+
+            {selectedTab === '즐겨찾기' && (
+                <FavoriteCourseTab refresh={route.params?.refresh} />
+            )}
+
+            {selectedTab === '내 코스' && isDeleteMode && selectedFolders.length > 0 && (
+                <TouchableOpacity
+                style={styles.confirmButton}
+                onPress={() => {
+                    const selectedFolder = folders.find(f => f.id === selectedFolders[0]);
+                    const selected = selectedFolders.length > 1
+                      ? `${selectedFolders.length}개의`
+                      : selectedFolder?.title ?? '';
+                    
+                    setModalData({ folderName: selected, text: '' });
+                    setDeleteFolderCourseCount(selectedFolder?.courseCount ?? 0); // 새 state 필요
+                    setActiveModal('delete');
+                }}
+              >
+                <Text style={styles.confirmButtonText}>삭제하기</Text>
+              </TouchableOpacity>
+            )}
+
+            {selectedTab === '내 코스' && isEditMode && selectedFolders.length === 1 && (
+                <View style={styles.editActionsContainer}>
+                    {(() => {
+                        const selectedFolder = folders.find(f => f.id === selectedFolders[0]);
+                        if (!selectedFolder) return null;
+
+                        return (
+                            <>
+                                <TouchableOpacity style={styles.editActionButton} onPress={() => openModal('rename', selectedFolder)}>
+                                    <Text style={styles.editActionText}>폴더명 수정</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.editActionButton} onPress={() => openModal('description', selectedFolder)}>
+                                    <Text style={styles.editActionText}>설명 수정</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity style={styles.editActionButton} onPress={handleImageUpdate}>
+                                    <Text style={styles.editActionText}>이미지 수정</Text>
+                                </TouchableOpacity>
+                            </>
+                        );
+                    })()}
+                </View>
+            )}
+
             <RenameFolderModal 
                 visible={activeModal === 'rename'}
                 folderName={modalData.folderName}
                 renameText={modalData.text}
                 onChangeText={(text) => setModalData((prev) => ({ ...prev, text }))} 
                 onClose={() => setActiveModal(null)}
-                onConfirm={() => console.log('폴더명 변경:', modalData.text)}
+                onConfirm={handleRename}
             />
     
             <RenameDescriptionModal 
@@ -224,14 +503,15 @@ const CourseScreen = ({ route }) => {
                 descriptionText={modalData.text}
                 onChangeText={(text) => setModalData((prev) => ({ ...prev, text }))}
                 onClose={() => setActiveModal(null)}
-                onConfirm={() => console.log('설명 변경:', modalData.text)}
+                onConfirm={handleDescriptionUpdate}
             />
     
             <DeleteFolderModal 
                 visible={activeModal === 'delete'}
                 folderName={modalData.folderName}
+                courseCount={deleteFolderCourseCount}
                 onClose={() => setActiveModal(null)}
-                onConfirm={confirmDelete}
+                onConfirm={handleFolderDelete}
             />
         </CourseLayout>
     );    
@@ -303,25 +583,6 @@ const styles = StyleSheet.create({
         borderBottomColor: '#ddd',
         paddingBottom: 8,
     },
-    courseTabItem: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 8,
-    },
-    courseActiveTab: {
-        borderBottomWidth: 2,
-        borderBottomColor: '#FF6F61',
-    },
-    courseTabText: {
-        fontSize: 16,
-        color: '#888',
-        textAlign: 'center',
-    },
-    courseActiveTabText: {
-        color: '#000',
-        fontWeight: 'bold',
-    },
     courseEmptyMessageContainer: {
         flex: 1,
         justifyContent: 'center',
@@ -336,7 +597,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#ffffff',
         borderRadius: 10,
-        padding: 14,
+        padding: 12,
         marginVertical: 5,
         shadowColor: '#000',
         shadowOpacity: 0.05,
@@ -364,132 +625,159 @@ const styles = StyleSheet.create({
         color: '#999',
     },
     courseBottomContainer: {
-        marginTop: 'auto',
-        alignItems: 'flex-end',
-        paddingVertical: 10,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 15,
     },
-    
+    createCourseButtonContainer: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+    },
     createCourseButton: {
         backgroundColor: '#FF6F61',
-        paddingVertical: 10,
-        paddingHorizontal: 12,
-        borderRadius: 15,
+        paddingVertical: 12,
+        paddingHorizontal: 20,
+        borderRadius: 20,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 5,
+        elevation: 3,
     },
-    
     createCourseButtonText: {
-        color: '#fff',
+        color: '#FFF',
         fontSize: 16,
         fontWeight: 'bold',
     },
-    createCourseButtonPressed: {
-        backgroundColor: '#E85C50',
+    checkboxWrapper: {
+        width: 32,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: 10,
     },
-
-    buttonPressed: {
-        backgroundColor: '#F0F0F0',
-    },
-    courseCheckbox: {
+    checkbox: {
         width: 20,
         height: 20,
         borderRadius: 10,
         borderWidth: 2,
         borderColor: '#888',
-        marginRight: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    courseCheckboxSelected: {
+    checkboxSelected: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
         backgroundColor: '#FF6F61',
-        borderColor: '#FF6F61',
     },
-
+      
+    confirmButton: {
+        backgroundColor: '#FF6F61',
+        paddingVertical: 12,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginTop: 10,
+        marginHorizontal: 16,
+        marginBottom: 16,
+    },
+      
+    confirmButtonText: {
+        color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
     editActionsContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         marginTop: 5,
-        paddingVertical: 5,
     },
     editActionButton: {
         flex: 1,
         alignItems: 'center',
         paddingVertical: 12,
-        marginHorizontal: 10,
+        marginHorizontal: 5,
         backgroundColor: '#FF6F61',
         borderRadius: 10,
+        marginBottom: 12,
     },
     editActionText: {
         color: '#FFF',
-        fontSize: 16,
+        fontSize: 15,
         fontWeight: 'bold',
     },
-
-    deleteConfirmButton: {
-        backgroundColor: '#FF6F61',
-        paddingVertical: 12,
-        alignItems: 'center',
-        marginTop: 10,
-        borderRadius: 10,
-    },
-    deleteConfirmText: {
-        color: '#FFF',
+    sectionTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-    },
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    deleteModalContainer: {
-        backgroundColor: '#fff',
-        padding: 20,
-        borderRadius: 10,
-        width: '80%',
-        alignItems: 'center',
-    },
-    deleteModalText: {
-        fontSize: 16,
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    modalButtonContainer: {
+        marginBottom: 8,
+        marginHorizontal: 16,
+      },
+      
+      courseItem: {
         flexDirection: 'row',
-    },
-    modalCancelButton: {
-        padding: 10,
-        marginRight: 10,
-    },
-    modalCancelText: {
-        color: '#888',
-    },
-    modalConfirmButton: {
-        padding: 10,
-        backgroundColor: '#FF6F61',
-        borderRadius: 5,
-    },
-    modalConfirmText: {
-        color: '#FFF',
-    },
-    editModalContainer: {
-        backgroundColor: '#FFFFFF',
-        padding: 20,
-        borderRadius: 10,
-        width: '85%',
         alignItems: 'center',
-    },
-    editModalTitle: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    editModalInput: {
-        width: '100%',
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 5,
-        padding: 10,
+        justifyContent: 'space-between',
+        backgroundColor: '#fff',
+        padding: 14,
+        marginVertical: 4,
+        marginHorizontal: 16,
+        borderRadius: 10,
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowOffset: { width: 0, height: 1 },
+        shadowRadius: 3,
+        elevation: 2,
+      },
+      
+      courseTitleRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+      },
+
+      courseTitle: {
         fontSize: 16,
-        marginBottom: 15,
-    },
+        fontWeight: 'bold',
+        marginRight: 8,
+      },
+
+      courseDescription: {
+        fontSize: 14,
+        color: '#666',
+      },
+      
+      courseType: {
+        fontSize: 14,
+        color: '#666',
+        marginTop: 4,
+      },
+      courseTextContainer: {
+        flex: 1,
+      },
+      
+      courseTypeBadgeWrapper: {
+        marginLeft: 10,
+      },
+      
+      courseTypeBadge: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 10,
+        overflow: 'hidden',
+      },
+      
+      tripType: {
+        backgroundColor: '#E0F0FF',
+        color: '#007AFF',
+      },
+      
+      dateType: {
+        backgroundColor: '#FFE0E0',
+        color: '#FF6F61',
+      },
 });
 
 export default CourseScreen;

@@ -4,7 +4,8 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { CourseStackParamList } from './course-navigation';
 import CourseLayout from './course-layout';
-
+import CourseDeleteConfirmModal from '../../components/modals/course/CourseDeleteConfirmModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Course = {
     courseId: number;
@@ -17,41 +18,20 @@ type Course = {
 const CourseFolderDetail = () => {
     const navigation = useNavigation<StackNavigationProp<CourseStackParamList>>();
     const route = useRoute();
-    const { folderId, folderTitle, folderDescription } = route.params as { folderId: number; folderTitle: string; folderDescription: string };
-
-    const [courses, setCourses] = useState<Course[]>([
-        { courseId: 1, courseTitle: '2월 경주여행 (맛집 위주)', courseType: 'TRIP', courseStartDate: '2024-02-10', courseEndDate: '2024-02-12' },
-        { courseId: 2, courseTitle: '2월 경주여행 (볼거리 위주)', courseType: 'TRIP', courseStartDate: '2024-02-10', courseEndDate: '2024-02-12' },
-        { courseId: 3, courseTitle: '2월 경주여행 (최종)', courseType: 'TRIP', courseStartDate: '2024-02-10', courseEndDate: '2024-02-12' },
-    ]);
-    const [loading, setLoading] = useState(false); // API 없이 바로 표시하므로 false
-
-    // 아래 주석은 api 요청 시 주석 해제
-    // const [courses, setCourses] = useState<Course[]>([]);
-    // const [loading, setLoading] = useState(true);
-
-    // useEffect(() => {
-    //     fetchCourses();
-    // }, []);
-
-    // const fetchCourses = async () => {
-    //     try {
-    //         const response = await fetch(`http://localhost:8080/api/course/folder/${folderId}`);
-    //         if (!response.ok) throw new Error('Failed to fetch courses');
-    //         const data = await response.json();
-    //         setCourses(data);
-    //     } catch (error) {
-    //         console.error('Error fetching courses:', error);
-    //     } finally {
-    //         setLoading(false);
-    //     }
-    // };
+    const { folderId, folderTitle, folderDescription, courses: initialCourses } = route.params as { folderId: number; folderTitle: string; folderDescription: string; courses: any[]; };
+    const [courses, setCourses] = useState<Course[]>(initialCourses || []);
+    const [loading, setLoading] = useState(true);
 
     const [selectedTab, setSelectedTab] = useState('내 코스');
     const [isDeleteMode, setIsDeleteMode] = useState(false);
     const [selectedCourses, setSelectedCourses] = useState<number[]>([]);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    
+
+    useEffect(() => {
+        setCourses(initialCourses || []);
+        setLoading(false);
+      }, [initialCourses]);
+      
     const toggleDeleteMode = () => {
         setIsDeleteMode(!isDeleteMode);
         setSelectedCourses([]);
@@ -78,7 +58,10 @@ const CourseFolderDetail = () => {
     }
 
     return (
-        <CourseLayout>
+        <CourseLayout
+        selectedTab="내 코스"
+        onTabSelect={() => {}}
+        >
             <View style={styles.courseFolderHeader}>
                 <View>
                     <Text style={styles.courseFolderTitle}>{folderTitle}</Text>
@@ -111,9 +94,11 @@ const CourseFolderDetail = () => {
                         }}
                     >
                         {isDeleteMode && (
-                            <View style={styles.courseCheckboxContainer}>
-                                <View style={[styles.courseCheckbox, selectedCourses.includes(item.courseId) && styles.courseCheckboxSelected]} />
-                            </View>
+                            <View style={styles.checkboxWrapper}>
+                                <View style={styles.checkbox}>
+                                    {selectedCourses.includes(item.courseId) && <View style={styles.checkboxSelected} />}
+                                </View>
+                            </View>                          
                         )}
                         <View style={styles.courseTextContainer}>
                             <Text style={styles.courseTitle}>{item.courseTitle}</Text>
@@ -126,31 +111,23 @@ const CourseFolderDetail = () => {
             />
 
             {isDeleteMode && selectedCourses.length > 0 && (
-                <TouchableOpacity style={styles.deleteConfirmButton} onPress={() => setShowDeleteModal(true)}>
-                    <Text style={styles.deleteConfirmText}>삭제하기</Text>
-                </TouchableOpacity>
+                <View style={styles.bottomButtons}>
+                    <TouchableOpacity style={styles.deleteConfirmButton} onPress={() => setShowDeleteModal(true)}>
+                        <Text style={styles.registerButtonText}>삭제하기</Text>
+                    </TouchableOpacity>
+                </View>
             )}
 
-            <Modal visible={showDeleteModal} transparent={true} animationType="fade">
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContainer}>
-                        <Text style={styles.modalText}>
-                            {selectedCourses.length > 1 ? 
-                                `${selectedCourses.length}개의 일정을 정말 삭제하시겠습니까?` :
-                                `"${courses.find(c => c.courseId === selectedCourses[0])?.courseTitle}"\n일정을 정말 삭제하시겠습니까?`
-                            }
-                        </Text>
-                        <View style={styles.modalButtonContainer}>
-                            <TouchableOpacity style={styles.modalCancelButton} onPress={() => setShowDeleteModal(false)}>
-                                <Text style={styles.modalCancelText}>취소</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.modalConfirmButton} onPress={confirmDelete}>
-                                <Text style={styles.modalConfirmText}>삭제</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+            <CourseDeleteConfirmModal
+                visible={showDeleteModal}
+                courseName={
+                    selectedCourses.length > 1
+                        ? `${selectedCourses.length}개의 일정`
+                        : courses.find(c => c.courseId === selectedCourses[0])?.courseTitle ?? ''
+                }
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={confirmDelete}
+            />
         </CourseLayout>
     );
 };
@@ -165,11 +142,11 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 16,
+        padding: 8,
         borderBottomColor: '#ddd',
     },
     courseFolderTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#FF6F61',
     },
@@ -187,6 +164,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         borderWidth: 1,
         borderColor: '#E0E0E0',
+        marginLeft: 8,
         elevation: 3,
     },
     courseDeleteIcon: {
@@ -207,35 +185,39 @@ const styles = StyleSheet.create({
         padding: 14,
         borderRadius: 8,
         marginBottom: 10,
-        marginHorizontal: 16,
+        marginHorizontal: 8,
         shadowColor: '#000',
         shadowOpacity: 0.05,
         shadowOffset: { width: 0, height: 1 },
         shadowRadius: 4,
         elevation: 2,
     },
-    courseCheckboxContainer: {
-        width: 30,
-        justifyContent: 'center',
+    checkboxWrapper: {
+        width: 32,
         alignItems: 'center',
-    },
-    courseCheckbox: {
+        justifyContent: 'center',
+      },
+      checkbox: {
         width: 20,
         height: 20,
         borderRadius: 10,
         borderWidth: 2,
         borderColor: '#888',
-    },
-    courseCheckboxSelected: {
+        justifyContent: 'center',
+        alignItems: 'center',
+      },
+      checkboxSelected: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
         backgroundColor: '#FF6F61',
-        borderColor: '#FF6F61',
-    },
+      },
     courseTextContainer: {
         flex: 1,
         marginLeft: 5,
     },
     courseTitle: {
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
     },
     courseType: {
@@ -255,54 +237,22 @@ const styles = StyleSheet.create({
         color: '#FF6F61',
         backgroundColor: '#FFE0E0',
     },
-    deleteConfirmButton: {
+    bottomButtons: {
+        paddingHorizontal: 16,
+        paddingTop: 8,
+        paddingBottom: 16,
+      },
+      deleteConfirmButton: {
         backgroundColor: '#FF6F61',
         paddingVertical: 12,
-        alignItems: 'center',
-        marginTop: 10,
         borderRadius: 10,
-    },
-    deleteConfirmText: {
+        alignItems: 'center',
+      },
+      registerButtonText: {
         color: '#FFF',
-        fontSize: 16,
+        fontSize: 14,
         fontWeight: 'bold',
-    },
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0,0,0,0.5)',
-    },
-    modalContainer: {
-        backgroundColor: '#fff',
-        padding: 20,
-        borderRadius: 10,
-        width: '80%',
-        alignItems: 'center',
-    },
-    modalText: {
-        fontSize: 16,
-        marginBottom: 20,
-        textAlign: 'center',
-    },
-    modalButtonContainer: {
-        flexDirection: 'row',
-    },
-    modalCancelButton: {
-        padding: 10,
-        marginRight: 10,
-    },
-    modalCancelText: {
-        color: '#888',
-    },
-    modalConfirmButton: {
-        padding: 10,
-        backgroundColor: '#FF6F61',
-        borderRadius: 5,
-    },
-    modalConfirmText: {
-        color: '#FFF',
-    },
+      },
 });
 
 export default CourseFolderDetail;

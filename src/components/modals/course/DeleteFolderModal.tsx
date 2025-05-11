@@ -4,19 +4,22 @@ import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 interface DeleteFolderModalProps {
     visible: boolean;
     folderName: string;
+    courseCount?: number;
     onClose: () => void;
     onConfirm: () => void;
-}
+}  
 
-const DeleteFolderModal: React.FC<DeleteFolderModalProps> = ({ visible, folderName, onClose, onConfirm }) => {
+const DeleteFolderModal: React.FC<DeleteFolderModalProps> = ({ visible, folderName, courseCount = 0, onClose, onConfirm }) => {
+    const isMultiDelete = folderName.includes('개의');
+
     return (
         <Modal visible={visible} transparent animationType="fade">
             <View style={styles.modalOverlay}>
                 <View style={styles.modalContainer}>
-                    <Text style={styles.modalTitle}>
-                        "{folderName}"
-                        {'\n'}
-                        폴더를 정말 삭제하시겠습니까?
+                <Text style={styles.modalTitle}>
+                    {courseCount && courseCount > 0
+                        ? `"${folderName}" 폴더에는 ${courseCount}개의 코스가 있습니다.\n삭제하면 코스는 기타 코스로 이동합니다.\n계속하시겠습니까?`
+                        : `"${folderName}" 폴더를 정말 삭제하시겠습니까?`}
                     </Text>
                     <View style={styles.modalButtonContainer}>
                         <TouchableOpacity style={styles.modalCancelButton} onPress={onClose}>
@@ -47,10 +50,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     modalTitle: {
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: 'bold',
         textAlign: 'center',
-        marginBottom: 10,
+        marginBottom: 20,
+        color: '#333',
     },
     modalInput: {
         width: '100%',
@@ -63,21 +67,29 @@ const styles = StyleSheet.create({
     },
     modalButtonContainer: {
         flexDirection: 'row',
+        justifyContent: 'center',
     },
     modalCancelButton: {
-        padding: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
         marginRight: 10,
+        backgroundColor: '#f2f2f2',
+        borderRadius: 5,
     },
     modalCancelText: {
-        color: '#888',
+        color: '#666',
+        fontSize: 14,
     },
     modalConfirmButton: {
-        padding: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 20,
         backgroundColor: '#FF6F61',
         borderRadius: 5,
     },
     modalConfirmText: {
         color: '#FFF',
+        fontSize: 14,
+        fontWeight: 'bold',
     },
 });
 

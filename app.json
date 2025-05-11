@@ -13,7 +13,7 @@
       "backgroundColor": "#FF8A8A"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": true, 
       "bundleIdentifier": "com.yncayn.MomentOurs"
     },
     "android": {

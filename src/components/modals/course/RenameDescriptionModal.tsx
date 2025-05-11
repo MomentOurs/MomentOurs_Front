@@ -66,21 +66,28 @@ const styles = StyleSheet.create({
     },
     modalButtonContainer: {
         flexDirection: 'row',
+        justifyContent: 'flex-end',
+        width: '100%',
     },
     modalCancelButton: {
-        padding: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
         marginRight: 10,
     },
     modalCancelText: {
         color: '#888',
+        fontSize: 16,
     },
     modalConfirmButton: {
-        padding: 10,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
         backgroundColor: '#FF6F61',
         borderRadius: 5,
     },
     modalConfirmText: {
         color: '#FFF',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
 
