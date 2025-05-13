@@ -11,6 +11,7 @@ import axios,  { AxiosError } from 'axios';
 type RootStackParamList = {
   Login: undefined;
   SignUpContainer: undefined;
+  FindIdScreen: undefined;
 //   FindPasswordScreen: undefined;
 ResetPasswordNavigator: undefined;
 };
@@ -119,9 +120,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ setIsLoggedIn }) => {
                     <Text style={styles.linkText}>회원가입</Text>
                 </TouchableOpacity>
                 <Text style={styles.separator}> | </Text>
-                {/* <TouchableOpacity onPress={() => alert('아이디 찾기 페이지 이동')}>
+                <TouchableOpacity onPress={() => navigation.navigate('FindIdScreen')}>
                     <Text style={styles.linkText}>아이디찾기</Text>
-                </TouchableOpacity> */}
+                </TouchableOpacity>
                 {/* <Text style={styles.separator}> | </Text> */}
                 {/* <TouchableOpacity onPress={() => alert('비밀번호 찾기 페이지 이동')}> */}
                 {/* <TouchableOpacity onPress={() => navigation.navigate('FindPasswordScreen')}>

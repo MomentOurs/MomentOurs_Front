@@ -1,12 +1,14 @@
 import { createStackNavigator } from '@react-navigation/stack';
 import LoginScreen from '../../src/screens/login/login-container';
 import SignUpContainer from '../../src/screens/signup/signup-container';
+import FindIdScreen from '../../src/screens/login/FindIdScreen';
 import FindPasswordScreen from '../../src/screens/login/findPasswordEmailScreen';
 import ResetPasswordNavigator from '../../src/screens/login/resetPassword-navigator';
 
 type LoggedOutStackParamList = {
     LoginScreen: undefined;
     SignUpContainer: undefined;
+    FindIdScreen: undefined;
     // FindPasswordScreen: undefined;
     ResetPasswordNavigator: undefined; 
 };
@@ -25,6 +27,11 @@ export default function LoggedOutStack({ setIsLoggedIn }: { setIsLoggedIn: (logg
             <Stack.Screen 
                 name="SignUpContainer" 
                 component={SignUpContainer} 
+                options={{ headerShown: false }} 
+            />
+            <Stack.Screen 
+                name="FindIdScreen" 
+                component={FindIdScreen} 
                 options={{ headerShown: false }} 
             />
             {/* <Stack.Screen
