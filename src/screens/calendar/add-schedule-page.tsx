@@ -406,6 +406,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 75,
         paddingVertical: 15
     },
+    radioContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginTop: 10,
+      }  
 });
 
 const texts = StyleSheet.create({
