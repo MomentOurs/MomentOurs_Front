@@ -4,7 +4,7 @@ import CalendarScreen from '../calendar';
 import QuestionsScreen from '../questions/index';
 import HomeScreen from '../home';
 import CourseNavigator from '../../src/screens/course/course-navigation';
-import MapScreen from '../map';
+import MapScreen from '../location';
 import HomeStackNavigator from '../../src/screens/home/navigator/home-stack-navigator';
 
 const Tab = createBottomTabNavigator();
