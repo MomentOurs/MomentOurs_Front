@@ -17,6 +17,8 @@ export default {
     ios: {
       bundleIdentifier: process.env.IOS_BUNDLE_ID,
       infoPlist: {
+        NMFClientId: process.env.NAVER_CLIENT_ID,
+        NMFNcpKeyId: process.env.NAVER_CLIENT_ID,
         NSPhotoLibraryUsageDescription: '앨범에서 이미지를 선택하기 위해 접근 권한이 필요합니다.',
         NSCameraUsageDescription: '사진을 촬영하기 위해 카메라 접근 권한이 필요합니다.',
         NSPhotoLibraryAddUsageDescription: '이미지를 저장하기 위해 사진 라이브러리 접근 권한이 필요합니다.',
