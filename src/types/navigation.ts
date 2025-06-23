@@ -6,9 +6,11 @@ export type RootStackParamList = {
   LocationDetail: {
     locationId: number;
   };
-  MomentWrite: {
+  MomentCreate: {
     locationId: number;
+    locationName: string;
   };
+  MomentDetailScreen: { momentId: number };
 };
 
 declare global {

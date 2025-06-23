@@ -41,17 +41,6 @@ const LocationSearchResult: React.FC<LocationSearchResultProps> = ({
         <Text style={styles.address} numberOfLines={1}>
           {item.address}
         </Text>
-        <View style={styles.metaContainer}>
-          <Text style={styles.metaText}>
-            {item.isOpen ? '영업중' : '영업종료'}
-          </Text>
-          {item.closingTime && (
-            <Text style={styles.metaText}>· {item.closingTime} 종료</Text>
-          )}
-          {item.rating && (
-            <Text style={styles.metaText}>· ⭐ {item.rating}</Text>
-          )}
-        </View>
       </View>
     </TouchableOpacity>
   );
