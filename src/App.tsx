@@ -67,6 +67,23 @@ export default function App() {
     checkLoginStatus();
   }, []);
 
+  useEffect(() => {
+  const clearAsyncStorageForDev = async () => {
+    try {
+      const isFirstRun = await AsyncStorage.getItem('DEV_FIRST_CLEAR');
+      if (!isFirstRun) {
+        await AsyncStorage.clear();
+        await AsyncStorage.setItem('DEV_FIRST_CLEAR', 'done');
+        console.log('✅ AsyncStorage 초기화 완료');
+      }
+    } catch (error) {
+      console.warn('초기화 실패:', error);
+    }
+  };
+
+  clearAsyncStorageForDev();
+}, []);
+
   return (
     <SafeAreaProvider>
     <NavigationContainer>
